@@ -1,0 +1,8 @@
+﻿# Local-only production-image HTTP check. The example origin is a test fixture,
+# not a public URL. This file never starts the tunnel service.
+services:
+  app:
+    environment:
+      PUBLIC_URL: https://pathwise-local-check.example.org
+      WEB_ORIGIN: https://pathwise-local-check.example.org
+      PAYMENTS_ENABLED: "false"

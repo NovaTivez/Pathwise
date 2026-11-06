@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+!.env.production.example
+.tools/
+artifacts/
+*.log
+.aws/
+.codex/
+*.pem
+*.key
+data/
+*.sqlite*
+*.tsbuildinfo

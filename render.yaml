@@ -1,0 +1,35 @@
+# PAID ALTERNATIVE ONLY. Do not apply/create without an existing budget or sponsor allocation.
+# Free Render cannot attach the required disk or guarantee this always-on worker.
+services:
+  - type: web
+    name: pathwise
+    runtime: node
+    region: singapore
+    plan: starter
+    numInstances: 1
+    autoDeployTrigger: 'off'
+    buildCommand: npm ci --include=dev && npm run build && npm run audit:secrets
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: pathwise-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.2
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /var/data/pathwise.sqlite
+      - key: PERSISTENT_DATA_DIR
+        value: /var/data
+      - key: STORAGE_KIND
+        value: render-disk
+      - key: AGENT_INSTANCES
+        value: "1"
+      - key: PAYMENTS_ENABLED
+        value: "false"
+# RENDER_EXTERNAL_URL supplies the canonical origin automatically.
+# Add Testnet keys/API credentials in the service Environment dashboard, never this file.
+# Migrations run at runtime with the mounted disk. Do not add a preDeployCommand migration.

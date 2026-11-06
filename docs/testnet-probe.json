@@ -1,0 +1,17 @@
+{
+  "checkedAt": "2026-11-06T17:43:34.954Z",
+  "sdk": "0.3.0",
+  "node": "24.22.2",
+  "purpose": "Read-only SDK contract compatibility probe; not payment acceptance evidence.",
+  "contracts": {
+    "deviceRegistry": "CAC4KOLHDLDYDWBOKXNKRN5KVHO56PLOIFXDLTBUWGVN6GVDEB7FQHU5",
+    "agentRegistry": "CCMZDSPTLX7IIJWCYEUM5DJUHOSOYSTHGK777S2TXZWEMC5ZZGPJ3EBV",
+    "paymentEscrow": "CC7EAW5FNJEDBS7THM5IT6XIOHO4AOYMLXT3KSZ3HWUIKEACTW7E5BFS"
+  },
+  "results": {
+    "owner": null,
+    "policy": null,
+    "escrowStroops": "0",
+    "status": "read calls succeeded"
+  }
+}

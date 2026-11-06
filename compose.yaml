@@ -1,0 +1,29 @@
+# Free local/public rehearsal. This does not provision a cloud hosting account.
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 28s
+    env_file:
+      - path: .env.production
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: "10000"
+      DATABASE_PATH: /var/data/pathwise.sqlite
+      PERSISTENT_DATA_DIR: /var/data
+      STORAGE_KIND: docker-volume
+      AGENT_INSTANCES: "1"
+    ports:
+      - "127.0.0.1:3000:10000"
+    volumes:
+      - pathwise-data:/var/data
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    profiles: [tunnel]
+    command: tunnel --no-autoupdate --url http://app:10000
+    restart: unless-stopped
+volumes:
+  pathwise-data:
+    name: pathwise-data
