@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { noirExtensionSigner } from '@noirx402/agent-sdk'
 import { Networks } from '@stellar/stellar-sdk'
-import type { Catalog, Decision, Grant, Plan, Roadmap, Setup } from './ui'
+import type { Catalog, Decision, Grant, Plan, Roadmap, Setup, StoredAgentDecision } from './ui'
 import { xlm } from './ui'
 export function usePathwise() {
   const [step, setStep] = useState(0), [token, setToken] = useState('')
@@ -61,12 +61,25 @@ export function usePathwise() {
   const grant = grants.find(g => g.mode === mode)
   const activePlan = (grant ? plans.find(p => p.id === grant.planId) : saved) || saved
   const approvedIds = grant ? grant.providers.map(p => p.id) : providers
-  const roadmap = preview && preview.planId === activePlan?.id && preview.mode === mode ? preview.value : null
+  const serverRoadmap = grant?.roadmapFromGrant ?? null
+  const previewRoadmap = preview && preview.planId === activePlan?.id && preview.mode === mode ? preview.value : null
+  const roadmap = !grant || previewRoadmap ? previewRoadmap : serverRoadmap
   const resource = (id: string) => catalog?.resources.find(r => r.id === id)
   const providerName = (id: string) => catalog?.providers.find(p => p.id === id)?.name || id
   const gaps = roadmap?.gaps || catalog?.skillMap.skills.filter(s => !activePlan?.skills.includes(s)) || []
-  const decisions: Decision[] = grant?.started ? grant.orders.map(o => ({ resourceId: o.resourceId, providerId: o.providerId, priceStroops: o.amountStroops, state: 'selected', reason: o.selectionReason })) : roadmap?.decisions || []
-  const selected = decisions.filter(d => d.state === 'selected'), skipped = roadmap?.decisions.filter(d => d.state === 'skipped') || []
+  const hasPersistedDecisions = Boolean(grant?.started && grant.decisions.length)
+  function persistedToDecision(d: StoredAgentDecision): Decision {
+    const state = d.decision === 'selected' ? 'selected' : d.decision === 'blocked' ? 'blocked' : 'skipped'
+    return { resourceId: d.resourceId, providerId: d.providerId, priceStroops: d.priceStroops, state, reason: d.reason }
+  }
+  const decisions: Decision[] = hasPersistedDecisions
+    ? grant!.decisions.map(persistedToDecision)
+    : roadmap?.decisions || []
+  const selected = decisions.filter(d => d.state === 'selected')
+  const skipped: Decision[] = hasPersistedDecisions
+    ? decisions.filter(d => d.state === 'skipped')
+    : roadmap?.decisions.filter(d => d.state === 'skipped') || []
+  const alternatives = decisions.filter(d => d.state !== 'selected')
   const ownerReady = ['registerDevice', 'registerAgent', 'fundEscrow'].every(kind => setup?.experiment?.ownerOperations.some(op => op.kind === kind && op.state === 'confirmed'))
   const serviceReady = Boolean(setup?.checkout?.active && setup.checkout.planId === activePlan?.id)
   const metrics = { total: grant?.totalBudgetStroops || activePlan?.budgetStroops || '0', reserve: grant?.reserveStroops || activePlan?.reserveStroops || '0', pending: grant?.pendingStroops || '0', spent: grant?.spentStroops || '0', remaining: grant?.remainingStroops || (activePlan ? (BigInt(activePlan.budgetStroops) - BigInt(activePlan.reserveStroops)).toString() : '0') }
@@ -101,6 +114,6 @@ export function usePathwise() {
     if (p) populate(p)
   }
   function toggleProvider(id: string) { setProviders(providers.includes(id) ? providers.filter(v => v !== id) : [...providers, id]); setPreview(null) }
-  return { step, token, busy, notice, error, connectionError, draft, setDraft, catalog, setup, grant, activePlan, approvedIds, roadmap, selected, skipped, gaps, ownerReady, serviceReady, metrics, mode, selectMode, resource, providerName, go, act, api, refresh, save, buildRoadmap, connect, signOwner, approve, toggleProvider }
+  return { step, token, busy, notice, error, connectionError, draft, setDraft, catalog, setup, grant, activePlan, approvedIds, roadmap, selected, skipped, alternatives, gaps, ownerReady, serviceReady, metrics, mode, selectMode, resource, providerName, go, act, api, refresh, save, buildRoadmap, connect, signOwner, approve, toggleProvider }
 }
 export type Pathwise = ReturnType<typeof usePathwise>

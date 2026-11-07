@@ -3,10 +3,12 @@ for (const name of ['NOIR_AGENT_SECRET', 'NOIR_PROVIDER_SECRET', 'NOIR_PROVIDER_
   const secret = process.env[name]
   if (!secret) throw new Error(`Run npm.cmd run setup:testnet first; ${name} is missing.`)
   const address = Keypair.fromSecret(secret).publicKey()
-  const existing = await fetch(`https://horizon-testnet.stellar.org/accounts/${address}`, { signal: AbortSignal.timeout(15000) })
+  console.log(`${name.replace('_SECRET', '')}: checking ${address}`)
+  const existing = await fetch(`https://horizon-testnet.stellar.org/accounts/${address}`, { signal: AbortSignal.timeout(45000) })
   if (existing.ok) { console.log(`${name.replace('_SECRET', '')}: account already exists (${address}); no funding requested.`); continue }
   if (existing.status !== 404) throw new Error('Could not check Testnet account; no funding attempted.')
-  const result = await fetch(`https://friendbot.stellar.org?addr=${address}`, { signal: AbortSignal.timeout(20000) })
+  console.log(`${name.replace('_SECRET', '')}: requesting Friendbot funding`)
+  const result = await fetch(`https://friendbot.stellar.org?addr=${address}`, { signal: AbortSignal.timeout(60000) })
   if (!result.ok) throw new Error(`Friendbot did not confirm funding (${result.status}); check the public account before retrying.`)
   const proof = await result.json()
   console.log(`${name.replace('_SECRET', '')}: Friendbot funded ${address}`)

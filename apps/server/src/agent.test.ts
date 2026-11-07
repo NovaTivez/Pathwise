@@ -49,6 +49,34 @@ test('curated planner compares gaps, skips overlap and purchases, handles format
   } finally { f.close() }
 })
 
+test('status exposes planner roadmap before start and persisted agent decisions after start', async () => {
+  const f = fixture()
+  try {
+    const agent = agentService(f.db, f.config)
+    agent.approve('session', { planId: 'plan', mode: 'simulation', providers: ids })
+    const before = agent.status('session')[0]
+    assert.ok(before.roadmapFromGrant)
+    assert.equal(before.started, false)
+    assert.equal(before.decisions.length, 0)
+    assert.ok(before.roadmapFromGrant.decisions.some(d => d.state === 'selected'))
+    assert.ok(before.roadmapFromGrant.decisions.some(d => d.state === 'skipped'))
+    const planned = agent.preview('session', { planId: 'plan', providers: ids, mode: 'simulation' })
+    assert.deepEqual(before.roadmapFromGrant.decisions.map(d => d.resourceId + d.state), planned.decisions.map(d => d.resourceId + d.state))
+    const grantId = before.id
+    await agent.start('session', grantId)
+    const after = agent.status('session')[0]
+    assert.ok(after.started)
+    assert.ok(after.decisions.length > 0)
+    assert.deepEqual(new Set(after.decisions.map(d => d.decision)), new Set(['selected', 'skipped', 'blocked']))
+    const fromRows = f.db.prepare('SELECT decision FROM agent_decisions WHERE grant_id=?').all(grantId) as { decision: string }[]
+    assert.deepEqual(new Set(fromRows.map(r => r.decision)), new Set(after.decisions.map(d => d.decision)))
+    assert.deepEqual(new Set(after.decisions.filter(d => d.decision === 'selected').map(d => d.resourceId)), new Set(after.orders.map(o => o.resourceId)))
+    assert.deepEqual(agent.status('another-session'), [])
+    const preview = agent.preview('session', { planId: 'plan', providers: ids, mode: 'simulation' })
+    assert.ok(preview.decisions.find(d => d.resourceId === 'iam-lab')!.reason.includes('Already purchased'))
+  } finally { f.close() }
+})
+
 test('atomic reservation protects total and reserve under concurrent starts, repeated clicks and restart', async () => {
   const f = fixture()
   let other: ReturnType<typeof openDatabase> | undefined
@@ -118,6 +146,46 @@ test('owner setup supports an approved secondary provider and rejects legacy exe
     await assert.rejects(ownerFlow.run('session'), /purchasing agent/)
     await assert.rejects(ownerFlow.claim('session'), /worker/)
   } finally { f.close() }
+})
+
+test('legacy Noir run hides raw SDK text and still reports a safe blocked purchase', async () => {
+  const leaking: NoirPort = {
+    server: { getLatestLedger: async () => ({ sequence: 1 }), getTransaction: async () => ({ status: rpc.Api.GetTransactionStatus.NOT_FOUND }) },
+    prepare: async () => { throw new Error('unused') }, submit: async () => { throw new Error('unused') },
+    getDeviceOwner: async () => { throw new Error('RAW-SDK-BODY-xyz') },
+    getPolicy: async () => null, getEscrowBalance: async () => 0n, getEscrowToken: async () => 'native',
+    getPendingBalance: async () => 0n, checkPayment: async () => ({ ok: true }),
+    authorizePayment: async () => { throw new Error('unused') }, claim: async () => { throw new Error('unused') }, pastEvents: async () => [],
+  }
+  const hidden = fixture()
+  try {
+    const flow = noirService(hidden.db, hidden.config, leaking)
+    flow.approve('session', 'plan')
+    await assert.rejects(flow.run('session'), (error: Error) => {
+      assert.equal(error.message.includes('RAW-SDK-BODY'), false)
+      assert.match(error.message, /could not be completed/)
+      return true
+    })
+  } finally { hidden.close() }
+  const blocked = fixture()
+  try {
+    const rowHolder: { agent?: string; asset?: string; limit_amount?: string; expires?: number; owner?: string } = {}
+    const flow = noirService(blocked.db, blocked.config, {
+      ...leaking,
+      getDeviceOwner: async () => String(rowHolder.owner),
+      getPolicy: async () => ({ agent: String(rowHolder.agent), asset: String(rowHolder.asset), maxAmount: BigInt(String(rowHolder.limit_amount)), expiresAt: new Date(Number(rowHolder.expires) - 1000) }),
+      getEscrowToken: async () => blocked.config.asset,
+      checkPayment: async () => ({ ok: false, reason: 'RAW-SDK-BODY-xyz' }),
+    } as unknown as NoirPort)
+    flow.approve('session', 'plan')
+    Object.assign(rowHolder, blocked.db.prepare('SELECT * FROM noir_experiments').get())
+    await assert.rejects(flow.run('session'), (error: Error) => {
+      assert.equal(error.message.includes('RAW-SDK-BODY'), false)
+      assert.match(error.message, /Noir blocked this purchase/)
+      return true
+    })
+    assert.equal(blocked.db.prepare('SELECT state FROM noir_experiments').get()!.state, 'blocked')
+  } finally { blocked.close() }
 })
 
 test('synthetic Noir worker reconciles ambiguous outcomes before retry, batches claims, and unlocks fulfillment only after settlement', async () => {
