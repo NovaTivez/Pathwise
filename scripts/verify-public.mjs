@@ -1,4 +1,5 @@
 ﻿import { mkdirSync, writeFileSync } from 'node:fs'
+import { dirname } from 'node:path'
 const raw = process.argv.slice(2).find(a => a.startsWith('https://') || a.startsWith('http://')) || process.env.PUBLIC_URL
 if (!raw) throw new Error('Pass the actual public origin: npm run verify:public -- https://YOUR-HOST --exercise-simulation')
 const url = new URL(raw)
@@ -43,6 +44,7 @@ try {
   }
 } catch (error) { failure = error instanceof Error ? error.message : 'Public check failed' }
 const report = { checkedAt: new Date().toISOString(), origin: url.origin, scope: 'HTTP checks and optional simulation only; not live payment proof', checks, passed: !failure, failure }
-mkdirSync('artifacts', { recursive: true }); writeFileSync('artifacts/public-check.json', JSON.stringify(report, null, 2) + '\n')
+const output = process.env.PUBLIC_CHECK_OUTPUT || 'artifacts/public-check.json'
+mkdirSync(dirname(output), { recursive: true }); writeFileSync(output, JSON.stringify(report, null, 2) + '\n')
 console.log(JSON.stringify(report, null, 2))
 if (failure) process.exitCode = 1

@@ -24,12 +24,12 @@ Amounts are integer stroops, not floating-point balances. The backend reserves c
 
 ## Evidence and current limits
 
-Implemented and automatically tested: planning, exact budgets/reserve, concurrency and duplicate protection, wallet challenge validation, raw signed webhooks, wrong-payment rejection, aggregate claim recovery and process-restart persistence. Current checks: 17 backend tests and 35 UI checks, plus build/typecheck/lint.
+Implemented and automatically tested: planning, exact budgets/reserve, concurrency and duplicate protection, wallet challenge validation, raw signed webhooks, wrong-payment rejection, aggregate claim recovery and process-restart persistence. On GitHub main f50361a: 20 backend tests and 54 UI checks passed, plus build/typecheck; lint exited successfully with one explorer-link effect warning. See submission-readiness.md for final verification scope.
 
-Actually verified on Testnet: deployed-contract read compatibility and existing agent/provider account balances. These are not purchase evidence. Registration was confirmed by the user; no independent registration receipt was inspected.
+Historically verified on Testnet: deployed-contract read compatibility and agent/provider account balances. They were not refreshed as purchase evidence in this final review. These are not purchase evidence. Registration was confirmed by the user; no independent registration receipt was inspected.
 
 Team: Hannah Munoz (@Hactivex), Paul Miguel Roa (@rambobambo), Adrian Salim (@psychoscient), supplied by the user.
 
-Still pending: owner wallet connection/signatures, real Velo service payment/webhook, two resource authorizations and provider claims, public repository/site, recording and shared deck. Replace this paragraph only after genuine evidence is recorded. Public proof belongs in README Testnet proof and docs/phase2-evidence.md; never include credentials, session tokens, signed transactions, access codes or private database contents.
+Still pending: owner wallet connection/signatures, real Velo service payment/webhook, two resource authorizations and provider claims, canonical payment verification and the video (the user will send it later). The public website passed HTTP/simulation checks; pitch-deck submission is user-confirmed, but its content/access were not independently inspected. The source repository is publicly verified at https://github.com/NovaTivez/Pathwise. Replace this paragraph only after genuine evidence is recorded. Public proof belongs in README Testnet proof and docs/phase2-evidence.md; never include credentials, session tokens, signed transactions, access codes or private database contents.
 
 Future work includes real provider fulfillment, additional certification tracks, authorization renewal and wallet/session recovery. No partnerships, adoption, savings or outcomes are claimed.

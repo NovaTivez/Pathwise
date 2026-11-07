@@ -1,6 +1,6 @@
 # Deploying Pathwise without losing payment records
 
-No public deployment or paid hosting commitment has been created. The user has no hosting/repository yet and no confirmed sponsor credits. The approved local image build and 19 container checks, including restart persistence, passed on November 7. The later Cloudflare image download was rejected; no tunnel or public rehearsal was started. See release-preparation.md for current evidence. Production serving, environment guards, worker draining, webhook authentication, and persistence are covered by local automated tests.
+The public repository at https://github.com/NovaTivez/Pathwise is verified. No actual public website URL or paid hosting authorization has been supplied for this final review; no sponsor credits are assumed. See submission-readiness.md for current scope. The approved local image build and 19 container checks, including restart persistence, passed on November 7. The later Cloudflare image download was rejected; no tunnel or public rehearsal was started. See release-preparation.md for current evidence. Production serving, environment guards, worker draining, webhook authentication, and persistence are covered by local automated tests.
 
 ## Choose a compatible route
 

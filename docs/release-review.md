@@ -1,5 +1,7 @@
 # Proposed public release contents
 
+> Historical snapshot. For the current GitHub-based verification and outstanding evidence, use [submission-readiness.md](submission-readiness.md) and [submission-checklist.md](submission-checklist.md). Older counts, missing-repository statements and local setup results below describe their original inspection only.
+
 This is a local review, not publication approval. No remote, public website or tunnel has been configured.
 
 ## Proposed exposure

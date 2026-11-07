@@ -1,5 +1,7 @@
 ﻿# Deployment preparation status
 
+> Historical snapshot. For the current GitHub-based verification and outstanding evidence, use [submission-readiness.md](submission-readiness.md) and [submission-checklist.md](submission-checklist.md). Older counts, missing-repository statements and local setup results below describe their original inspection only.
+
 Current November 7 local image/restart evidence is in [release preparation](release-preparation.md). The older build-blocked statements below are historical.
 
 > Historical implementation record. The November 7 [audit](hackathon-audit.md), [submission checklist](submission-checklist.md) and [current multi-provider rehearsal guide](testnet-rehearsal.md) supersede old runtime, UI and readiness statements below. No live payment proof was added by the audit.

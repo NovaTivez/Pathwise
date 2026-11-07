@@ -1,5 +1,7 @@
 ﻿# Hackathon implementation audit
 
+> Historical snapshot. For the current GitHub-based verification and outstanding evidence, use [submission-readiness.md](submission-readiness.md) and [submission-checklist.md](submission-checklist.md). Older counts, missing-repository statements and local setup results below describe their original inspection only.
+
 Recorded November 7, 2026, Philippine time. **No submission-ready or deployed claim is made.** This is a source/configuration/test audit with a fresh read-only Testnet probe, not a live payment rehearsal or comprehensive security assessment.
 
 ## Sources actually inspected

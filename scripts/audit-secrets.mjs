@@ -3,8 +3,8 @@ import { join, relative } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { parseEnv } from 'node:util'
 const ignored = new Set(['node_modules', '.git', '.tools', '.aws', '.codex', 'data', 'artifacts'])
-const environments = [process.env, ...['.env', '.env.production'].filter(existsSync).map(path => parseEnv(readFileSync(path, 'utf8')))]
-const secrets = [...new Set(environments.flatMap(env => Object.entries(env).filter(([k, v]) => /(SECRET|API_KEY|PASSWORD|ACCESS_TOKEN)$/.test(k) && v && v.length >= 12).map(([, v]) => v)))]
+const environments = [process.env, ...readdirSync('.').filter(p => /^\.env(?:$|\.)/.test(p) && !p.endsWith('.example')).map(path => parseEnv(readFileSync(path, 'utf8')))]
+const secrets = [...new Set(environments.flatMap(env => Object.entries(env).filter(([k, v]) => /SECRET|API_KEY|PASSWORD|TOKEN/.test(k) && v && v.length >= 12).map(([, v]) => v)))]
 const findings = []
 let files = 0
 function walk(dir) {

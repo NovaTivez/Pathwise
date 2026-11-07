@@ -2,12 +2,13 @@
 
 A purchasing agent that helps certification learners fill skill gaps without spending their exam reserve.
 
-**Live website:** Not yet deployed  
-**Demo video (2 min):** Pending  
-**Pitch deck:** Pending  
+**Repository:** [NovaTivez/Pathwise](https://github.com/NovaTivez/Pathwise) - anonymous public access verified<br>
+**Live website:** [Open Pathwise](https://reaction-multi-cheaper-evaluation.trycloudflare.com/) - temporary tunnel; public HTTP and simulation checks passed<br>
+**Demo video (2 min):** [Shared demo video folder](https://drive.google.com/drive/folders/19UYTxq1TZ-bwu-gO3E738Pvv7E1mnrOr?usp=sharing) - no video file visible signed out; playback/duration unverified<br>
+**Pitch deck:** User confirms it was included in the submission form; link/content/access not independently inspected<br>
 **Team:** Hannah Munoz (@Hactivex), Paul Miguel Roa (@rambobambo), Adrian Salim (@psychoscient)
 
-**Submission status: not ready.** The local application and payment adapters are implemented and tested, but no agent-made Testnet payment has been verified, and the public repository, live website and public submission assets are still incomplete. See the [submission checklist](docs/submission-checklist.md) and [source-based audit](docs/hackathon-audit.md).
+**Submission status: not ready.** The public monorepo is verified, and GitHub main f50361a includes the teammate's integration updates. The supplied temporary website passed anonymous HTTP and simulation checks. The shared video folder opens anonymously but shows no video file; playback and duration are unverified. The user confirms the deck was included in the submission form; its content/access have not been independently inspected. The video will be supplied later, and canonical agent-made Testnet reconciliation remains unverified. See the [current readiness record](docs/submission-readiness.md) and [submission checklist](docs/submission-checklist.md); older audits are historical snapshots.
 
 ## Problem
 
@@ -15,7 +16,7 @@ Certification learners must choose among courses, labs and practice exams that o
 
 ## Solution
 
-The frontend now starts with Home → Careers → Roadmap, with seven career choices and useful stored payment Activity. Cloud uses this checkout's existing backend purchase flow. Other careers provide clearly labeled browser-only milestone/free-resource previews until the backend advertises matching career support. Timeline guidance and certification reference links do not imply purchasable exam vouchers. See [frontend merge and API handoff](docs/frontend-handoff.md) before integrating the teammate's newer payment backend; that unpublished backend has not been verified here.
+The frontend now starts with Home → Careers → Roadmap, with seven career choices and useful stored payment Activity. Cloud uses this checkout's existing backend purchase flow. Other careers provide clearly labeled browser-only milestone/free-resource previews until the backend advertises matching career support. Timeline guidance and certification reference links do not imply purchasable exam vouchers. See [frontend merge and API handoff](docs/frontend-handoff.md) for the merged frontend/backend contract. GitHub main includes the teammate's receipt/webhook compatibility and run-recovery changes, and the supplied public deployment has passed simulation checks. Its genuine payments have not yet been reconciled here.
 
 Pathwise builds a learning-resource plan from a learner's certification goal, familiar skills, preferred formats and spending boundaries. Its **rule-based agent** compares a small catalog, explains its choices, skips redundant purchases and preserves a requested exam reserve. The current track is AWS Certified Cloud Practitioner, using Pathwise's curated demonstration skill map, not an official or guaranteed exam syllabus.
 
@@ -33,7 +34,7 @@ The learner approves providers and spending rules once. After the separate servi
 
 **Illustrative example, not a verified transaction:** with no familiar skills, all formats, a 30 test-XLM learning budget, 10 reserved for the exam and a 10-XLM per-resource cap, the current catalog selects Sandbox Grove's IAM essentials lab for **6 test XLM** and CloudTrail Academy's Cloud foundations course for **8 test XLM**. It skips overlapping courses and blocks the 14-XLM billing practice exam because it exceeds the cap. The 10-XLM reserve is protected and 6 XLM of purchasing capacity remains. The Velo service fee defaults to **1 test XLM separately**.
 
-The [planner](apps/server/src/planner.ts#L15), [atomic start](apps/server/src/agent.ts#L223) and [server worker](apps/server/src/agent.ts#L249) implement this behavior. The algorithm is transparent and deterministic; it does not promise optimal allocation or exam readiness.
+The [planner](apps/server/src/planner.ts#L15), [atomic start](apps/server/src/agent.ts#L235) and [server worker](apps/server/src/agent.ts#L261) implement this behavior. The algorithm is transparent and deterministic; it does not promise optimal allocation or exam readiness.
 
 ## Architecture
 
@@ -69,11 +70,11 @@ The supplied **November 5, 2026 Builder Handbook, page 6**, lists these October 
 
 | Responsibility | Implemented SDK calls and source |
 | --- | --- |
-| Owner device, policy and escrow | [`prepare(owner, operation)`](apps/server/src/noir.ts#L71) with `registerDevice`, `registerAgent`, `fundEscrow`; wallet signs; [`submit(signedXdr)`](apps/server/src/noir.ts#L95) submits the exact prepared operation |
-| Agent eligibility and payment | [`checkPayment`, then `authorizePayment`](apps/server/src/agent.ts#L143) with server-selected merchant, asset, amount and nonce |
-| Demo-provider collection | [`getPendingBalance`, `claim`](apps/server/src/agent.ts#L166) with a dedicated provider signer |
-| Recovery | [`getTransaction` and `pastEvents`](apps/server/src/agent.ts#L108) reconcile stored hashes and exact events before state transitions |
-| Browser signing | [`noirExtensionSigner`](apps/web/src/usePathwise.ts#L86); owner secrets never enter Pathwise |
+| Owner device, policy and escrow | [`prepare(owner, operation)`](apps/server/src/noir.ts#L72) with `registerDevice`, `registerAgent`, `fundEscrow`; wallet signs; [`submit(signedXdr)`](apps/server/src/noir.ts#L96) submits the exact prepared operation |
+| Agent eligibility and payment | [`checkPayment`, then `authorizePayment`](apps/server/src/agent.ts#L155) with server-selected merchant, asset, amount and nonce |
+| Demo-provider collection | [`getPendingBalance`, `claim`](apps/server/src/agent.ts#L178) with a dedicated provider signer |
+| Recovery | [`getTransaction` and `pastEvents`](apps/server/src/agent.ts#L120) reconcile stored hashes and exact events before state transitions |
+| Browser signing | [`noirExtensionSigner`](apps/web/src/usePathwise.ts#L65); owner secrets never enter Pathwise |
 
 **On-chain policy** restricts the registered agent, asset, per-payment maximum and expiry; escrow balance and nonces constrain authorization. **Application rules** additionally enforce approved providers, resource/price identity, total committed budget, exam reserve, duplicate resources, session ownership and verified service activation. These application rules must not be mistaken for an on-chain merchant whitelist or total-budget policy.
 
@@ -83,9 +84,9 @@ The supplied **November 5, 2026 Builder Handbook, page 6**, lists these October 
 
 Installed and lockfile-pinned: **`@carts1024/velo-sdk` 0.1.0-alpha.4**, satisfying the handbook's alpha-distribution instruction. The implementation was checked against the installed README and TypeScript declarations; no dependency upgrade was needed.
 
-- [`checkout.sessions.create`](apps/server/src/velo.ts#L37) creates a server-priced native test-XLM service fee tied to the exact session, plan and verified owner. A stored idempotency key makes checkout recovery safe.
-- [`paymentIntents.retrieve`](apps/server/src/velo.ts#L57) retrieves current status. A browser success redirect or API `paid` status alone cannot activate purchasing.
-- [`Velo.webhooks.verify`](apps/server/src/velo.ts#L70) verifies the original body and signature. The [Express route](apps/server/src/app.ts#L45) captures raw bytes before JSON/session middleware.
+- [`checkout.sessions.create`](apps/server/src/velo.ts#L94) creates a server-priced native test-XLM service fee tied to the exact session, plan and verified owner. A stored idempotency key makes checkout recovery safe.
+- [`paymentIntents.retrieve`](apps/server/src/velo.ts#L114) retrieves current status. A browser success redirect or API `paid` status alone cannot activate purchasing.
+- [`Velo.webhooks.verify`](apps/server/src/velo.ts#L127) checks the original body and signature first. The current compatibility adapter accepts narrowly validated current envelopes only after the SDK's shape-only rejection and an independent matching HMAC; checkout/API/Testnet-ledger gates remain required. The [Express route](apps/server/src/app.ts#L67) captures raw bytes before JSON/session middleware.
 - Activation requires a non-test signed success event, the expected project/intent/amount/asset/description, paid API status and an [exact successful Stellar Testnet transfer](apps/server/src/velo-ledger.ts#L5) from the verified owner to the expected Velo receiver, including any required memo.
 - Event/delivery deduplication and transactional updates handle repeated or out-of-order delivery. One transaction cannot activate multiple checkouts, and a recorded checkout hash cannot silently change.
 
@@ -93,7 +94,7 @@ The Velo payment buys Pathwise's demonstration roadmap/procurement service. It d
 
 ## Testnet proof
 
-**No qualifying agent-made Testnet payment is recorded or verified. This is a submission blocker.** No live owner setup, Noir agent authorization, merchant claim or Velo service activation was found in the application records inspected for this audit.
+**No qualifying agent-made Testnet payment has been independently verified in this final review. This remains a submission blocker.** The teammate may have additional evidence on the canonical host; its report and actual transaction references have not been supplied. The inspected local databases contain no live purchases and cannot establish what happened on another deployment. See [current verification scope](docs/submission-readiness.md).
 
 The fresh [read-only SDK probe](docs/testnet-probe.json) succeeded against all three selected contracts using an unused device identifier. It confirms read compatibility, not a purchase. The [evidence report](docs/phase2-evidence.md) also contains previously recorded [agent-account Friendbot funding](https://stellar.expert/explorer/testnet/tx/c4ae3aafc6e29e781a1cdd2a735f3af6e97e4b0a24a1262157fc990c36118f16) and [demo-provider Friendbot funding](https://stellar.expert/explorer/testnet/tx/dd1d271b154465e269a77b9ceca7bab1757b2fd4c5efda9e432d694c3d9db288). Those historical account-funding references were not revalidated in this audit and are **setup only**, not proof that the agent bought a resource.
 
@@ -114,7 +115,7 @@ Pathwise/
   README.md          Judging document
 ```
 
-The agent currently lives in `apps/server/src/agent.ts`; there is no separate implemented `packages/agent`. Root workspaces declare `apps/*` and `packages/*`. One root `npm ci` installs all implemented components. A local Git repository is initialized for release preparation. It has not been published, and no public repository URL has been supplied.
+The agent currently lives in `apps/server/src/agent.ts`; there is no separate implemented `packages/agent`. Root workspaces declare `apps/*` and `packages/*`. One root `npm ci` installs all implemented components. The [public repository](https://github.com/NovaTivez/Pathwise) and its main README were retrieved anonymously with HTTP 200. Root installation and local checks are distinct from a verified deployed payment journey.
 
 ## Run it locally
 
@@ -168,9 +169,13 @@ npm.cmd run lint --workspace=web
 npm.cmd test
 node scripts/verify-learning-ui.mjs
 npm.cmd run audit:secrets
+node scripts/audit-git-history.mjs
 ```
 
-For later hosting, see [deployment preparation](docs/deployment.md). The prepared Render configuration is a paid alternative and must not be applied without an approved budget. No hosting resource or public tunnel was created by this audit.
+For later hosting, see [deployment preparation](docs/deployment.md). The prepared Render configuration is a paid alternative and must not be applied without an approved budget. No hosting resource or public tunnel was created by this final review. The user supplied the existing temporary public origin above; 13 anonymous HTTP/simulation checks passed. This is not proof of actual payments or host durability.
+
+
+Current code verification at f50361a: 20 backend tests and 54 UI rendering/helper checks passed, along with build/typecheck. Lint exits successfully with one explorer-link effect warning. These are code checks, not deployed-payment evidence.
 
 ## Environment variables
 
@@ -199,13 +204,18 @@ All credential values stay on the backend. Owner keys stay in the wallet. No `VI
 | `PATHWISE_API_TARGET` | Optional frontend development proxy target when API port changes | Local backend origin, usually `http://127.0.0.1:3001` |
 | `BACKUP_PATH` | Required only for the consistent database-backup command | Private destination chosen by the operator |
 | `EVIDENCE_OUTPUT` | Optional private output path for read-only reconciliation | Operator-selected path; defaults to ignored artifacts locally |
+| `PUBLIC_CHECK_OUTPUT` | Optional private report path for verify:public; avoids overwriting an earlier report | Operator-selected ignored artifacts path |
 | `TRUST_PROXY_HOPS` | Optional production ingress setting; only one hop is supported | Selected hosting proxy configuration |
 
-The [environment examples](.env.example), [production example](.env.production.example) and [operations guide](docs/deployment.md) cover advanced backup/evidence output settings. This audit found the four server Noir keys present locally and Velo's three required setup values absent; no values were exposed.
+The [environment examples](.env.example), [production example](.env.production.example) and [operations guide](docs/deployment.md) cover advanced backup/evidence output settings. The local checkout has server Noir keys but lacks Velo's three settings; no values were exposed. The user reports the teammate configured credentials on a separate backend. Public health and simulation were checked there; genuine transactions still require canonical reconciliation.
 
 ## Screenshots
 
-Current genuine local UI captures use the explicit simulation mode; they are not Testnet payment evidence. Browser chrome was cropped without changing the application pixels.
+Current career-first landing capture from the isolated local preview of f50361a (payments disabled). Browser chrome was cropped; application pixels were not changed. This is UI evidence, not a Testnet receipt.
+
+![Current local Pathwise landing page](docs/screenshots/landing-current.png)
+
+The older simulation screenshots below predate this interface and remain historical examples, not payment evidence.
 
 ![Goal setup in simulation](docs/screenshots/goal-setup.png)
 
@@ -215,7 +225,7 @@ Verified live-purchase and fulfillment screenshots remain pending. No secrets, t
 
 ## What's next
 
-First complete eligibility confirmation, actual Testnet payment evidence, public repository/site, the two-minute video and accessible pitch deck. The [checklist](docs/submission-checklist.md) separates these blockers from verified code. The [submission write-up](docs/submission-writeup.md), [timed demo script](docs/demo-script.md) and [pitch slide content](docs/pitch-deck-content.md) are prepared; an actual recording and shared deck are still pending. The handbook deadline is **November 7, 2026, 12:00 noon Philippine time**; the team representative must submit manually.
+The public repository and user-confirmed registration are recorded. The supplied website passed public HTTP/simulation checks. Still verify canonical Testnet payment evidence and the two-minute video; deck submission is user-confirmed, while deck content/access remain independently unverified. The [checklist](docs/submission-checklist.md) separates these blockers from verified code. The [submission write-up](docs/submission-writeup.md), [timed demo script](docs/demo-script.md) and [pitch slide content](docs/pitch-deck-content.md) are prepared; an actual recording and shared deck are still pending. The handbook deadline is **November 7, 2026, 12:00 noon Philippine time**; the team representative must submit manually.
 
 Future product work includes real provider fulfillment, additional certification tracks, authorization renewal and wallet/session recovery, a safer owner-guided unused-escrow recovery interface, and broader operational testing. None is claimed as implemented. Real providers would need their own commercial and access arrangements; the current demo has no provider partnerships.
 

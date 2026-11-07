@@ -1,5 +1,7 @@
 # Current release preparation — November 7, 2026
 
+> Historical snapshot. For the current GitHub-based verification and outstanding evidence, use [submission-readiness.md](submission-readiness.md) and [submission-checklist.md](submission-checklist.md). Older counts, missing-repository statements and local setup results below describe their original inspection only.
+
 This record supersedes historical statements that the local Docker build was not run. Pathwise is not submission-ready and is not publicly deployed.
 
 The approved local build used node:24.22.2-bookworm-slim, resolved base digest sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9. It ran npm ci --include=dev, the server/frontend build, the secret audit and npm prune --omit=dev. npm reported zero known vulnerabilities at build time; this is not a security guarantee. Downloads were the Node image layers and locked npm dependencies. No image was pushed. The later cloudflare/cloudflared image download request was rejected and was not retried.

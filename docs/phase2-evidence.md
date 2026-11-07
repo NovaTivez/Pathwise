@@ -1,5 +1,7 @@
 ﻿# Phase 2 evidence
 
+> Historical snapshot. For the current GitHub-based verification and outstanding evidence, use [submission-readiness.md](submission-readiness.md) and [submission-checklist.md](submission-checklist.md). Older counts, missing-repository statements and local setup results below describe their original inspection only.
+
 > Historical implementation record. The November 7 [audit](hackathon-audit.md), [submission checklist](submission-checklist.md) and [current multi-provider rehearsal guide](testnet-rehearsal.md) supersede old runtime, UI and readiness statements below. No live payment proof was added by the audit.
 
 Status: **live payment acceptance not achieved**. Genuine authorization + claim and verified Velo service payment remain pending user wallet actions/credentials. This file records only evidence actually obtained.
