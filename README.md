@@ -15,6 +15,8 @@ Certification learners must choose among courses, labs and practice exams that o
 
 ## Solution
 
+The frontend now starts with Home → Careers → Roadmap, with seven career choices and useful stored payment Activity. Cloud uses this checkout's existing backend purchase flow. Other careers provide clearly labeled browser-only milestone/free-resource previews until the backend advertises matching career support. Timeline guidance and certification reference links do not imply purchasable exam vouchers. See [frontend merge and API handoff](docs/frontend-handoff.md) before integrating the teammate's newer payment backend; that unpublished backend has not been verified here.
+
 Pathwise builds a learning-resource plan from a learner's certification goal, familiar skills, preferred formats and spending boundaries. Its **rule-based agent** compares a small catalog, explains its choices, skips redundant purchases and preserves a requested exam reserve. The current track is AWS Certified Cloud Practitioner, using Pathwise's curated demonstration skill map, not an official or guaranteed exam syllabus.
 
 The learner approves providers and spending rules once. After the separate service payment and owner authorization are verified, the server can purchase the selected resources without a human payment click for each item. Courses, providers, prices and fulfillment are fictional demo data; no commercial courses or exam vouchers are sold. Simulation remains available without a wallet or payment credentials.
