@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from 'react'
 import { noirExtensionSigner } from '@noirx402/agent-sdk'
 import { Networks } from '@stellar/stellar-sdk'
 import type { Catalog, Grant, Plan, Roadmap, Setup } from './ui'
-import { xlm } from './ui'
+import { xlm, decisionFromStored } from './ui'
 import { careerChoices, exactStroops, roadmapGuidance } from './career-guidance'
 const providerDefaults=['cloudtrail','sandbox','lantern']
 const previewOnly=(p:Plan|null)=>Boolean(p?.id.startsWith('preview:'))
@@ -38,11 +38,12 @@ export function usePathwise(){
   useEffect(()=>{if(!token)return;const lifetime=new AbortController();async function poll(){try{const[c,g,s]=await Promise.all([api('agent/catalog'),api('agent/status'),api('setup')]);if(!lifetime.signal.aborted){setCatalog(c);setGrants(g);setSetup(s);setConnectionError('')}}catch{if(!lifetime.signal.aborted)setConnectionError('Status is unavailable. Saved commitments remain on the server. Check status before retrying payment.')}}void poll();const timer=setInterval(()=>void poll(),2500);return()=>{lifetime.abort();clearInterval(timer)}},[token,api])
   const grant=grants.find(g=>g.mode===mode&&g.planId===saved?.id),activePlan=saved
   const approvedIds=grant?grant.providers.map(p=>p.id):providers
-  const serverRoadmap=preview&&preview.planId===saved?.id&&preview.mode===mode?preview.value:null
+  const previewRoadmap=preview&&preview.planId===saved?.id&&preview.mode===mode?preview.value:null
+  const serverRoadmap=previewRoadmap||grant?.roadmapFromGrant||null
   const roadmap=activePlan?roadmapGuidance(activePlan,serverRoadmap):null
   const resource=(id:string)=>catalog?.resources.find(r=>r.id===id)
   const providerName=(id:string)=>catalog?.providers.find(p=>p.id===id)?.name||id
-  const decisions=grant?.started&&grant.decisions?.length?grant.decisions:grant?.started?grant.orders.map(o=>({resourceId:o.resourceId,providerId:o.providerId,priceStroops:o.amountStroops,state:'selected',reason:o.selectionReason})):serverRoadmap?.decisions||[]
+  const decisions=grant?.started&&grant.decisions?.length?grant.decisions.map(decisionFromStored):grant?.started?grant.orders.map(o=>({resourceId:o.resourceId,providerId:o.providerId,priceStroops:o.amountStroops,state:'selected',reason:o.selectionReason})):serverRoadmap?.decisions||[]
   const selected=decisions.filter(d=>d.state==='selected'),skipped=decisions.filter(d=>d.state==='skipped'||d.state==='blocked')
   const ownerReady=['registerDevice','registerAgent','fundEscrow'].every(kind=>setup?.experiment?.ownerOperations.some(op=>op.kind===kind&&op.state==='confirmed'))
   const serviceReady=Boolean(setup?.checkout?.active&&setup.checkout.planId===activePlan?.id)
@@ -65,6 +66,6 @@ export function usePathwise(){
   function selectMode(next:string){setMode(next);setPreview(null);setNotice('');setError(false)}
   function toggleProvider(id:string){setProviders(providers.includes(id)?providers.filter(v=>v!==id):[...providers,id]);setPreview(null)}
   function viewPlan(id:string){const plan=plans.find(p=>p.id===id)||savedGuidance().find(p=>p.id===id);if(plan){setSaved(plan);populate(plan);remember(plan);setPreview(null)}go(2)}
-  return {compared:Boolean(serverRoadmap||grant?.started||previewOnly(activePlan)),step,token,busy,booting,building,grants,careers,previewOnly:previewOnly(activePlan),notice,error,connectionError,draft,setDraft,catalog,setup,grant,activePlan,approvedIds,roadmap,selected,skipped,gaps:roadmap?.gaps||[],ownerReady,serviceReady,metrics,mode,selectMode,resource,providerName,go,act,api,refresh,save,buildRoadmap,connect,signOwner,approve,toggleProvider,viewPlan}
+  return {alternatives:skipped,compared:Boolean(serverRoadmap||grant?.started||previewOnly(activePlan)),step,token,busy,booting,building,grants,careers,previewOnly:previewOnly(activePlan),notice,error,connectionError,draft,setDraft,catalog,setup,grant,activePlan,approvedIds,roadmap,selected,skipped,gaps:roadmap?.gaps||[],ownerReady,serviceReady,metrics,mode,selectMode,resource,providerName,go,act,api,refresh,save,buildRoadmap,connect,signOwner,approve,toggleProvider,viewPlan}
 }
 export type Pathwise=ReturnType<typeof usePathwise>

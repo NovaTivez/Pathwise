@@ -47,7 +47,7 @@ Selected tiles change border/background clearly. When motion is allowed, resourc
 - Each card offers an accessible native "Preview this resource" disclosure. It shows skill coverage and the actual demonstration fulfillment description, without access codes or purchase authorization. Existing orders also offer "View in My resources". Catalog browsing has no unchecked purchase route.
 - No durations, ratings, reviews, enrollment counts, discounts, provider partnerships or learning outcomes were invented.
 - BudgetSummary keeps available capacity and protected exam reserve visible. Pending commitments and settled spending remain separately labeled in the expandable breakdown. Capacity excludes reserve, commitments, settled spending and simulated allocations. The Velo service fee stays separate.
-- Test XLM is explained at the budget interaction as free Stellar Testnet currency for the demo, with no real-money purchase. Simulation explicitly says no funds move. Owner keys remain in the wallet.
+- The budget step uses plain XLM allocation copy (no inset demo explainer). Testnet context remains in the app header/footer and authorization flow. Simulation explicitly says no funds move. Owner keys remain in the wallet.
 - Sample access still requires the existing authorized + claimed + fulfilled eligibility check. Only actual saved hash fields produce Testnet explorer links. Purchased resources are never presented as completed learning.
 
 ## Accessibility and responsive rules

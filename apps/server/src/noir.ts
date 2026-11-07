@@ -124,7 +124,7 @@ export function noirService(db: DatabaseSync, config: Config, injected?: NoirPor
         if (owner !== row.owner || policy?.agent !== row.agent || policy.asset !== row.asset || policy.maxAmount !== BigInt(row.limit_amount!) || !policy.expiresAt || policy.expiresAt.getTime() > Number(row.expires) || policy.expiresAt.getTime() <= Date.now()) throw new Error('On-chain owner or policy differs from the approved experiment.')
         if (await client.getEscrowToken(String(row.device_hash)) !== row.asset) throw new Error('Escrow asset mismatch.')
         const check = await client.checkPayment({ deviceHash: String(row.device_hash), agent: String(row.agent), asset: String(row.asset), amount: BigInt(row.amount!) })
-        if (!check.ok) { db.prepare('UPDATE noir_experiments SET state=\'blocked\' WHERE id=?').run(row.id); throw new Error(`Noir blocked purchase: ${check.reason}`) }
+        if (!check.ok) { db.prepare('UPDATE noir_experiments SET state=\'blocked\' WHERE id=?').run(row.id); throw new Error('Noir blocked this purchase for policy, budget, or authorization reasons. Review your saved experiment and use reconciliation; do not repeat an uncertain payment.') }
         const ledger = (await client.server.getLatestLedger()).sequence
         db.prepare('UPDATE noir_experiments SET state=\'authorizing\', start_ledger=? WHERE id=?').run(ledger, row.id)
         const signer = recordingSigner(config.agent!, hash => { signed = true; db.prepare('UPDATE noir_experiments SET authorize_hash=? WHERE id=?').run(hash, row.id) })
@@ -136,7 +136,9 @@ export function noirService(db: DatabaseSync, config: Config, injected?: NoirPor
         return this.status(session)
       } catch (error) {
         if (!signed) { db.prepare('UPDATE noir_experiments SET state=CASE WHEN state=\'authorizing\' THEN \'planned\' ELSE state END WHERE id=?').run(row.id); unlock(String(row.id)) }
-        throw error
+        const safe = error instanceof Error && ['Authorization is awaiting', 'Noir blocked this purchase', 'On-chain owner or policy differs', 'Escrow asset mismatch.'].some(prefix => error.message.startsWith(prefix))
+        if (safe) throw error
+        throw new Error('Noir authorization could not be completed. Reconcile the stored transaction hash before retrying; do not submit a duplicate operation.')
       }
     },
     async claim(session: string) {
@@ -166,7 +168,11 @@ export function noirService(db: DatabaseSync, config: Config, injected?: NoirPor
         db.prepare('UPDATE noir_experiments SET state=\'claimed\' WHERE claim_hash=?').run(fresh.claim_hash)
         unlock(batchId)
         return this.status(session)
-      } catch (error) { if (!signed) unlock(batchId); throw error }
+      } catch (error) {
+        if (!signed) unlock(batchId)
+        if (error instanceof Error && (error.message.includes('Aggregate pending balance') || error.message.includes('Claim transaction awaits'))) throw error
+        throw new Error('Noir claim could not be completed. Reconcile stored transaction hashes before retrying.')
+      }
     },
     async reconcile(session: string) {
       ready(true)

@@ -86,13 +86,24 @@ export function agentService(db: DatabaseSync, config: Config, injected?: NoirPo
     const old = previous(who, m).filter(holdsBudget)
     return planPurchases(learner, readCatalog(db).resources, ids, old.map(o => o.resource_id), old.reduce((n, o) => n + BigInt(o.amount), 0n))
   }
+  /** Same planner inputs as preview/start: snapshot + current catalog + cross-grant committed purchases for this owner/mode. */
+  function roadmapForGrant(g: Grant) {
+    const learner = JSON.parse(g.snapshot) as Learner
+    const providerRows = JSON.parse(g.providers) as { id: string; merchant: string | null }[]
+    const ids = providerRows.map(p => p.id)
+    const old = previous(g.owner, g.mode).filter(holdsBudget)
+    return planPurchases(learner, readCatalog(db).resources, ids, old.map(o => o.resource_id), old.reduce((n, o) => n + BigInt(o.amount), 0n))
+  }
   function status(session: string) {
     const grants = db.prepare('SELECT * FROM agent_grants WHERE session_hash=? ORDER BY rowid DESC').all(session) as unknown as Grant[]
     return grants.map(g => {
       const list = orders(g.id), learner = JSON.parse(g.snapshot) as Learner
       const committed = list.filter(holdsBudget).reduce((n, o) => n + BigInt(o.amount), 0n)
       const sum = (states: string[]) => list.filter(o => states.includes(o.status)).reduce((n, o) => n + BigInt(o.amount), 0n).toString()
-      return { id: g.id, mode: g.mode, planId: g.plan_id, started: Boolean(g.started), expiresAt: new Date(g.expires).toISOString(), owner: g.owner, providers: JSON.parse(g.providers), totalBudgetStroops: learner.budgetStroops, perPurchaseLimitStroops: learner.limitStroops, pendingStroops: sum(['reserved', 'authorization_pending', 'authorized', 'claim_pending']), spentStroops: sum(['claimed', 'fulfilled']), simulatedStroops: sum(['simulated']), remainingStroops: (BigInt(learner.budgetStroops) - BigInt(learner.reserveStroops) - committed).toString(), reserveStroops: learner.reserveStroops, orders: list.map(o => ({ id: o.id, resourceId: o.resource_id, providerId: o.provider_id, amountStroops: o.amount, status: o.status, selectionReason: `Planned to cover ${JSON.parse(o.coverage).join(', ')} within the approved learning allowance and purchase limit.`, reason: o.reason, authorization: o.authorization_state, claim: o.claim_state, fulfillment: o.fulfillment_state, authorizeHash: o.authorize_hash, claimHash: o.batch_id ? db.prepare('SELECT hash FROM agent_claim_batches WHERE id=?').get(o.batch_id)?.hash || null : null, sampleAccessCode: o.fulfillment_state === 'fulfilled' ? o.code : null })) }
+      const roadmapFromGrant = roadmapForGrant(g)
+      const storedDecisions = db.prepare('SELECT resource_id, provider_id, amount, decision, reason FROM agent_decisions WHERE grant_id=? ORDER BY rowid').all(g.id) as { resource_id: string; provider_id: string; amount: string; decision: string; reason: string }[]
+      const decisions = storedDecisions.map(d => ({ resourceId: d.resource_id, providerId: d.provider_id, priceStroops: d.amount, decision: d.decision as 'selected' | 'skipped' | 'blocked', reason: d.reason }))
+      return { id: g.id, mode: g.mode, planId: g.plan_id, started: Boolean(g.started), expiresAt: new Date(g.expires).toISOString(), owner: g.owner, providers: JSON.parse(g.providers), totalBudgetStroops: learner.budgetStroops, perPurchaseLimitStroops: learner.limitStroops, pendingStroops: sum(['reserved', 'authorization_pending', 'authorized', 'claim_pending']), spentStroops: sum(['claimed', 'fulfilled']), simulatedStroops: sum(['simulated']), remainingStroops: (BigInt(learner.budgetStroops) - BigInt(learner.reserveStroops) - committed).toString(), reserveStroops: learner.reserveStroops, roadmapFromGrant, decisions, orders: list.map(o => ({ id: o.id, resourceId: o.resource_id, providerId: o.provider_id, amountStroops: o.amount, status: o.status, selectionReason: `Planned to cover ${JSON.parse(o.coverage).join(', ')} within the approved learning allowance and purchase limit.`, reason: o.reason, authorization: o.authorization_state, claim: o.claim_state, fulfillment: o.fulfillment_state, authorizeHash: o.authorize_hash, claimHash: o.batch_id ? db.prepare('SELECT hash FROM agent_claim_batches WHERE id=?').get(o.batch_id)?.hash || null : null, sampleAccessCode: o.fulfillment_state === 'fulfilled' ? o.code : null })) }
     })
   }
   function takeLock(id: string) { return Boolean(db.prepare('INSERT OR IGNORE INTO payment_locks VALUES (\'noir\', ?)').run(id).changes) }
@@ -210,7 +221,7 @@ export function agentService(db: DatabaseSync, config: Config, injected?: NoirPo
       db.exec('BEGIN IMMEDIATE')
       try {
         if (m === 'testnet') {
-          if (db.prepare('SELECT id FROM noir_experiments WHERE owner=?').get(who)) throw new Error('This wallet already has a Phase 2 experiment. Finish/review it before using a separate fresh Testnet owner for the purchasing agent.')
+          if (db.prepare('SELECT id FROM noir_experiments WHERE owner=?').get(who)) throw new Error('This wallet already has a Phase 2 learning experiment on file. Reconcile or finish that setup with the same owner wallet first; Pathwise cannot open a second concurrent experiment for this address. Do not create a new wallet to bypass this—continue the existing Testnet experiment.')
           const available = (BigInt(learner.budgetStroops) - BigInt(learner.reserveStroops)).toString()
           const device = createHash('sha256').update(`Pathwise learning agent:${who}:${id}`).digest('hex')
           db.prepare('INSERT INTO noir_experiments (id,session_hash,plan_id,owner,device_hash,agent,merchant,asset,amount,limit_amount,funding,expires,nonce,deployment) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)').run(g.experiment_id!, session, g.plan_id, who, device, config.agent!.publicKey, config.providers[ids[0]]!.publicKey, config.asset, available, learner.limitStroops, available, expires, String(Date.now()), JSON.stringify(config.network))
