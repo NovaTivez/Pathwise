@@ -125,6 +125,138 @@ button, .button-link, .career-choice, .choice, .learning-card {
   .section-heading { flex-wrap: wrap; row-gap: 8px; }
 }
 
+/* Budget amounts keep the unit beside the number, never over it. */
+.career-onboarding .budget-card .budget-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.career-onboarding .budget-card .amount-input {
+  display: flex;
+  align-items: center;
+  flex: 0 0 188px;
+  width: 188px;
+  max-width: 188px;
+  min-width: 188px;
+  box-sizing: border-box;
+  padding: 0 12px 0 0;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+}
+.career-onboarding .budget-card .amount-input input {
+  position: static;
+  flex: 1 1 auto;
+  width: 1%;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 12px 8px 12px 12px !important;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-align: right;
+}
+.career-onboarding .budget-card .amount-input > span {
+  position: static;
+  transform: none;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0;
+  color: #5c4d68;
+  white-space: nowrap;
+}
+.career-onboarding .budget-card .amount-input input:focus {
+  outline: none;
+}
+.career-onboarding .budget-card .amount-input:focus-within {
+  border-color: #7139dc;
+  outline: 3px solid #7139dc;
+  outline-offset: 2px;
+}
+
+/* The roadmap's next action is a lime slab, not a caption or a decorative arrow. */
+.roadmap-lead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px;
+}
+.roadmap-lead:has(.lead-action) { grid-template-columns: minmax(0, 1fr) 232px; }
+.roadmap-lead .lead-copy { padding: 24px 16px 24px 24px; min-width: 0; }
+.roadmap-lead h2 { margin: 0 0 10px; }
+.roadmap-lead p { max-width: 42rem; margin: 0; }
+.roadmap-lead .lead-action {
+  align-self: stretch;
+  width: 100%;
+  min-height: 132px;
+  margin: 0;
+  padding: 22px 20px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--journey-lime);
+  color: #243018;
+  font-size: 26px;
+  font-weight: 680;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  text-align: left;
+  white-space: normal;
+}
+.roadmap-lead .lead-action:is(:hover, :focus-visible, :active):not(:disabled) {
+  background: #e7f6a8;
+  border-color: #e7f6a8;
+  color: #243018;
+}
+.roadmap-lead .lead-action:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+@media (max-width: 700px) {
+  .career-onboarding .budget-card .budget-field { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .career-onboarding .budget-card .amount-input { flex-basis: auto; width: 100%; max-width: none; min-width: 0; }
+  .roadmap-lead, .roadmap-lead:has(.lead-action) { grid-template-columns: minmax(0, 1fr); padding: 8px; }
+  .roadmap-lead .lead-copy { padding: 18px 14px 8px; }
+  .roadmap-lead .lead-action { min-height: 84px; font-size: 22px; }
+}
+
+.path-layout.has-next-step { padding-bottom: 108px; }
+.next-step-bar {
+  position: fixed;
+  z-index: 30;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--journey-paper) 94%, white);
+  border-top: 1px solid #e4dce8;
+}
+.next-step-bar .next-step {
+  width: min(720px, 100%);
+  min-height: 68px;
+  margin: 0;
+  padding: 16px 28px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--journey-lime);
+  color: #243018;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  white-space: normal;
+  text-align: center;
+}
+.next-step-bar .next-step:is(:hover, :focus-visible, :active):not(:disabled) {
+  background: #e7f6a8;
+  color: #243018;
+}
+.next-step-bar .next-step:focus-visible { outline: 3px solid #7139dc; outline-offset: 3px; }
+.next-step-bar .next-step:disabled { background: #e8edda; color: #66704d; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   .loading-line::after { transform: scaleX(.5); }

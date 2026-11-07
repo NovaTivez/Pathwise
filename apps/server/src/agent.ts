@@ -20,7 +20,7 @@ const holdsBudget = (o: Order) => !['blocked', 'failed'].includes(o.status)
 export function agentService(db: DatabaseSync, config: Config, injected?: NoirPort) {
   const client: NoirPort = injected || new NoirAgentClient({ network: config.network })
   seedCatalog(db, config.providers)
-  function mode(value: unknown): Mode { if (value !== 'simulation' && value !== 'testnet') throw new Error('Choose simulation or testnet explicitly.'); return value }
+  function mode(value: unknown): Mode { if (value !== 'simulation' && value !== 'testnet') throw new Error('That execution mode is not available.'); return value }
   function plan(session: string, id: unknown): Learner {
     const row = typeof id === 'string' ? db.prepare('SELECT payload FROM learner_plans WHERE id=? AND session_hash=?').get(id, session) : null
     if (!row) throw new Error('Plan not found in this session.')
@@ -47,7 +47,7 @@ export function agentService(db: DatabaseSync, config: Config, injected?: NoirPo
     if (!db.prepare('SELECT id FROM service_checkouts WHERE session_hash=? AND plan_id=? AND owner=? AND active=1').get(g.session_hash, g.plan_id, g.owner)) throw new Error('A verified service payment for this exact plan and owner is required.')
   }
   function liveReady(ids: string[]) {
-    if (!config.paymentsEnabled) throw new Error('Live Testnet execution is paused by the operator. Simulation remains available.')
+    if (!config.paymentsEnabled) throw new Error('Live Testnet execution is paused by the operator.')
     if (config.noirProblems.length) throw new Error(config.noirProblems.join(' '))
     const addresses = ids.map(id => config.providers[id]?.publicKey)
     if (addresses.some(a => !a) || new Set(addresses).size !== addresses.length || addresses.includes(config.agent!.publicKey)) throw new Error('Approved providers require distinct server-configured merchant keys, separate from the agent.')
@@ -272,7 +272,7 @@ export function agentService(db: DatabaseSync, config: Config, injected?: NoirPo
           const g = db.prepare('SELECT * FROM agent_grants WHERE id=?').get(sim.grant_id) as unknown as Grant
           try {
             validateOrder(g, sim)
-            db.prepare('UPDATE agent_orders SET status=\'simulated\', authorization_state=\'simulated\', claim_state=\'simulated\', fulfillment_state=\'simulation_preview\', reason=\'Simulation only: no transaction, merchant settlement, or access code.\' WHERE id=?').run(sim.id)
+            db.prepare('UPDATE agent_orders SET status=\'simulated\', authorization_state=\'simulated\', claim_state=\'simulated\', fulfillment_state=\'simulation_preview\', reason=\'No Testnet transaction was submitted.\' WHERE id=?').run(sim.id)
           } catch (error) { db.prepare('UPDATE agent_orders SET status=\'blocked\', authorization_state=\'blocked\', reason=? WHERE id=?').run(error instanceof Error ? error.message : 'Blocked.', sim.id) }
         }
         if (config.noirProblems.length) return
