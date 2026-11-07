@@ -1,6 +1,6 @@
-import { Velo } from '@carts1024/velo-sdk'
+import { Velo, VeloWebhookSignatureVerificationError } from '@carts1024/velo-sdk'
 import type { PaymentIntent, WebhookEvent } from '@carts1024/velo-sdk'
-import { createHash, randomUUID } from 'node:crypto'
+import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto'
 import type { DatabaseSync } from 'node:sqlite'
 import { stroops } from './policy.ts'
 import type { paymentConfig } from './payment-config.ts'
@@ -13,6 +13,63 @@ export type VeloPort = Pick<Velo, 'checkout' | 'paymentIntents'>
 export function veloService(db: DatabaseSync, config: Config, origin: string, client?: VeloPort, verifyLedger: VeloLedgerVerifier = verifyVeloLedger) {
   const velo = client || (config.veloProblems.length ? null : new Velo({ apiKey: config.velo.apiKey, baseUrl: config.velo.baseUrl, environment: 'testnet', timeoutMs: 10000, maxRetries: 1 }))
   function ready() { if (!velo) throw new Error('Complete Velo setup before creating a checkout.'); return velo }
+  function authenticSignature(raw: string, header: string | null) {
+    if (!header) return false
+    let timestamp = '', signature = ''
+    for (const part of header.split(',')) {
+      const index = part.indexOf('=')
+      if (index === -1) continue
+      const key = part.slice(0, index).trim()
+      const value = part.slice(index + 1).trim()
+      if (key === 't') timestamp = value
+      if (key === 'v1') signature = value
+    }
+    if (!/^\d{1,12}$/.test(timestamp) || !/^[a-f0-9]{64}$/.test(signature)) return false
+    const expected = createHmac('sha256', config.velo.webhookSecret).update(`${timestamp}.${raw}`).digest('hex')
+    const actual = Buffer.from(signature, 'hex')
+    const computed = Buffer.from(expected, 'hex')
+    return actual.length === computed.length && timingSafeEqual(actual, computed)
+  }
+  function signedTestId(raw: string) {
+    try {
+      const parsed = JSON.parse(raw) as unknown
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
+      const record = parsed as Record<string, unknown>
+      if (record.test !== true || typeof record.id !== 'string' || record.id.length < 1 || record.id.length > 200) return null
+      return record.id
+    } catch { return null }
+  }
+  function text(value: unknown) { return typeof value === 'string' && value.length > 0 ? value : null }
+  function recoverablePaymentEvent(raw: string): WebhookEvent | null {
+    let parsed: unknown
+    try { parsed = JSON.parse(raw) } catch { return null }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
+    const record = parsed as Record<string, unknown>
+    if (record.test === true) return null
+    const type = text(record.type)
+    const paymentTypes = ['payment.created', 'payment.succeeded', 'payment.failed', 'payment_access.activated', 'payment.access_activated']
+    if (!type || !paymentTypes.includes(type)) return null
+    const project = record.project
+    const intent = record.paymentIntent
+    if (!project || typeof project !== 'object' || Array.isArray(project) || !intent || typeof intent !== 'object' || Array.isArray(intent)) return null
+    const projectRecord = project as Record<string, unknown>
+    const payment = intent as Record<string, unknown>
+    const projectId = text(projectRecord.id)
+    const eventId = text(record.id)
+    const intentId = text(payment.id)
+    const amount = typeof payment.amount === 'number' && Number.isFinite(payment.amount) ? String(payment.amount) : text(payment.amount)
+    const asset = text(payment.asset)
+    const status = text(payment.status)
+    const statuses = ['awaiting_route', 'created', 'pending', 'paid', 'failed', 'expired', 'cancelled']
+    if (!projectId || !eventId || eventId.length > 200 || !intentId || !amount || !asset || !status || !statuses.includes(status)) return null
+    const sentAt = text(record.sentAt) || new Date().toISOString()
+    const timestamp = (value: unknown) => typeof value === 'number' && Number.isFinite(value) ? new Date(value).toISOString() : text(value) || sentAt
+    return {
+      version: '1', id: eventId, type: type as 'payment.created', test: false, sentAt,
+      project: { id: projectId, registryProjectId: text(projectRecord.registryProjectId) || '', name: text(projectRecord.name) || '', slug: text(projectRecord.slug) || '' },
+      paymentIntent: { id: intentId, amount, asset, merchantName: text(payment.merchantName) || '', description: text(payment.description), status: status as 'pending', ...(text(payment.txHash) ? { txHash: text(payment.txHash)! } : {}), createdAt: timestamp(payment.createdAt), updatedAt: timestamp(payment.updatedAt) },
+    }
+  }
   function binding(session: string) {
     const wallet = db.prepare('SELECT owner FROM wallet_bindings WHERE session_hash=?').get(session)
     if (!wallet) throw new Error('Verify your owner wallet first.')
@@ -69,7 +126,23 @@ export function veloService(db: DatabaseSync, config: Config, origin: string, cl
     },
     async webhook(raw: string, signature: string | null, delivery: string | null) {
       if (!config.velo.webhookSecret || !config.velo.projectId) throw new Error('Velo webhook is not configured.')
-      const event: WebhookEvent = await Velo.webhooks.verify({ payload: raw, signature, secret: config.velo.webhookSecret, toleranceSeconds: 300 })
+      let event: WebhookEvent
+      try {
+        event = await Velo.webhooks.verify({ payload: raw, signature, secret: config.velo.webhookSecret, toleranceSeconds: 300 })
+      } catch (error) {
+        // The pinned SDK rejects current Velo envelopes after a valid signature. Tests stay inert. Real events still require the checkout, API, and Testnet proof below.
+        if (!(error instanceof VeloWebhookSignatureVerificationError) || !error.message.startsWith('Invalid webhook event:') || !authenticSignature(raw, signature)) throw error
+        const testId = signedTestId(raw)
+        if (testId) {
+          const digest = createHash('sha256').update(raw).digest('hex')
+          if (db.prepare('SELECT id FROM velo_events WHERE id=?').get(testId)) return { received: true, duplicate: true }
+          db.prepare('INSERT OR IGNORE INTO velo_events VALUES (?, ?, ?, ?, ?)').run(testId, delivery, null, digest, Date.now())
+          return { received: true, ignored: true }
+        }
+        const recovered = recoverablePaymentEvent(raw)
+        if (!recovered) throw error
+        event = recovered
+      }
       if (event.project.id !== config.velo.projectId) throw new Error('Webhook belongs to another project.')
       const digest = createHash('sha256').update(raw).digest('hex')
       const prior = db.prepare('SELECT * FROM velo_events WHERE id=?').get(event.id)

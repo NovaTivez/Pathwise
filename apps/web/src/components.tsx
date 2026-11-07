@@ -1,7 +1,40 @@
+import { useEffect, useState } from 'react'
 import type { Pathwise } from './usePathwise'
 import { readable } from './ui'
+
+const EXPERT_INDEX_DELAY_MS = 12000
+
+function expertReadyAt(hash: string) {
+  const key = `pathwise.expert-ready.${hash}`
+  try {
+    const saved = Number(sessionStorage.getItem(key))
+    if (Number.isFinite(saved) && saved > 0) return saved
+    const readyAt = Date.now() + EXPERT_INDEX_DELAY_MS
+    sessionStorage.setItem(key, String(readyAt))
+    return readyAt
+  } catch {
+    return Date.now() + EXPERT_INDEX_DELAY_MS
+  }
+}
+
 export function Evidence({ hash, label }: { hash?: string | null; label: string }) {
-  return hash && /^[a-f0-9]{64}$/i.test(hash) ? <a className="evidence" target="_blank" rel="noreferrer" href={`https://stellar.expert/explorer/testnet/tx/${hash}`}>{label} ↗<span className="sr-only"> (Stellar Expert Testnet, new tab)</span></a> : null
+  const valid = Boolean(hash && /^[a-f0-9]{64}$/i.test(hash))
+  const [readyAt, setReadyAt] = useState<number | null>(null)
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!valid || !hash) { setReadyAt(null); return }
+    const opensAt = expertReadyAt(hash)
+    setReadyAt(opensAt)
+    if (opensAt <= Date.now()) return
+    const timer = window.setInterval(() => setNow(Date.now()), 250)
+    return () => window.clearInterval(timer)
+  }, [hash, valid])
+  if (!valid || !hash) return null
+  if (readyAt === null || now < readyAt) {
+    const seconds = readyAt === null ? Math.ceil(EXPERT_INDEX_DELAY_MS / 1000) : Math.max(1, Math.ceil((readyAt - now) / 1000))
+    return <span className="evidence waiting" aria-disabled="true">{label} — indexing on Stellar Expert ({seconds}s)</span>
+  }
+  return <a className="evidence" target="_blank" rel="noreferrer" href={`https://stellar.expert/explorer/testnet/tx/${hash}`}>{label} ↗<span className="sr-only"> (Stellar Expert Testnet, new tab)</span></a>
 }
 export function ServiceSummary({ p }: { p: Pathwise }) {
   const matchesPlan = p.setup?.checkout?.planId === p.activePlan?.id

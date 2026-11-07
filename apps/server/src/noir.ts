@@ -4,6 +4,7 @@ import { Keypair, Networks, TransactionBuilder, rpc } from '@stellar/stellar-sdk
 import { createHash, randomUUID } from 'node:crypto'
 import type { DatabaseSync } from 'node:sqlite'
 import type { paymentConfig } from './payment-config.ts'
+import { ledgerEvents } from './noir-events.ts'
 
 type Config = ReturnType<typeof paymentConfig>
 type Row = Record<string, string | number | null>
@@ -33,7 +34,7 @@ export function noirService(db: DatabaseSync, config: Config, injected?: NoirPor
   }
   async function authorizedEvent(row: Row) {
     if (!row.authorize_hash) return false
-    const events = await client.pastEvents(Number(row.start_ledger))
+    const events = await ledgerEvents(client, Number(row.start_ledger))
     return events.some(e => e.type === 'payment.authorized' && e.txHash === row.authorize_hash && e.deviceHash === row.device_hash && e.merchant === row.merchant && e.amount === BigInt(row.amount!))
   }
   function recordingSigner(base: NoirSigner, save: (hash: string) => void): NoirSigner {
@@ -163,7 +164,7 @@ export function noirService(db: DatabaseSync, config: Config, injected?: NoirPor
         })
         await client.claim({ merchant: signer, token: config.asset })
         const fresh = experiment(session)
-        const events = await client.pastEvents(ledger)
+        const events = await ledgerEvents(client, ledger)
         if (!events.some(e => e.type === 'payment.claimed' && e.txHash === fresh.claim_hash && e.merchant === own.merchant && e.amount === sum)) throw new Error('Claim transaction awaits aggregate event reconciliation.')
         db.prepare('UPDATE noir_experiments SET state=\'claimed\' WHERE claim_hash=?').run(fresh.claim_hash)
         unlock(batchId)
@@ -190,7 +191,7 @@ export function noirService(db: DatabaseSync, config: Config, injected?: NoirPor
       }
       if (row.state === 'claim_pending' && row.claim_hash) {
         const tx = await client.server.getTransaction(String(row.claim_hash))
-        const events = tx.status === rpc.Api.GetTransactionStatus.SUCCESS ? await client.pastEvents(Number(row.claim_start)) : []
+        const events = tx.status === rpc.Api.GetTransactionStatus.SUCCESS ? await ledgerEvents(client, Number(row.claim_start)) : []
         if (events.some(e => e.type === 'payment.claimed' && e.txHash === row.claim_hash && e.merchant === row.merchant && e.amount === BigInt(row.claim_amount!))) {
           db.prepare('UPDATE noir_experiments SET state=\'claimed\' WHERE claim_hash=?').run(row.claim_hash)
           db.prepare('DELETE FROM payment_locks WHERE name=\'noir\'').run()

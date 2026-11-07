@@ -6,6 +6,7 @@ import type { NoirPort } from './noir.ts'
 import type { paymentConfig } from './payment-config.ts'
 import { verifyVeloLedger } from './velo-ledger.ts'
 import { stroops } from './policy.ts'
+import { ledgerEvents } from './noir-events.ts'
 
 type Row = Record<string, string | number | null>
 const explorer = (hash: string) => `https://stellar.expert/explorer/testnet/tx/${hash}`
@@ -27,7 +28,7 @@ export async function reconcileEvidence(db: DatabaseSync, config: ReturnType<typ
         usedHashes.add(hash)
         const tx = await noir.server.getTransaction(hash)
         if (tx.status === rpc.Api.GetTransactionStatus.SUCCESS) {
-          const events = await noir.pastEvents(Number(o.start_ledger))
+          const events = await ledgerEvents(noir, Number(o.start_ledger))
           verified = events.some(e => e.type === 'payment.authorized' && e.txHash === hash && e.deviceHash === o.device_hash && e.merchant === o.merchant && e.amount === BigInt(o.amount!))
         }
       }
@@ -45,7 +46,7 @@ export async function reconcileEvidence(db: DatabaseSync, config: ReturnType<typ
     try {
       if (!members.length || members.some(o => !authorizationProof[String(o.id)] || o.merchant !== b.merchant || o.asset !== b.asset) || members.reduce((sum, o) => sum + BigInt(o.amount!), 0n) !== BigInt(b.amount!) || b.asset !== config.asset) throw new Error('Batch membership mismatch')
       if (b.hash && (await noir.server.getTransaction(String(b.hash))).status === rpc.Api.GetTransactionStatus.SUCCESS) {
-        const events = await noir.pastEvents(Number(b.start_ledger))
+        const events = await ledgerEvents(noir, Number(b.start_ledger))
         verified = events.some(e => e.type === 'payment.claimed' && e.txHash === b.hash && e.merchant === b.merchant && e.amount === BigInt(b.amount!))
       }
       if (b.status === 'claimed' && !verified) issues.push(`Claim batch ${b.id}: stored settlement lacks matching on-chain proof.`)
@@ -91,7 +92,7 @@ export async function reconcileEvidence(db: DatabaseSync, config: ReturnType<typ
       try {
         const tx = await noir.server.getTransaction(String(op.hash))
         if (tx.status === rpc.Api.GetTransactionStatus.SUCCESS && tx.ledger) {
-          const events = await noir.pastEvents(tx.ledger)
+          const events = await ledgerEvents(noir, tx.ledger)
           verified = events.some(event => event.txHash === op.hash && 'deviceHash' in event && event.deviceHash === e.device_hash && (op.kind === 'registerDevice' ? event.type === 'device.registered' && event.agent === e.agent : op.kind === 'registerAgent' ? event.type === 'agent.registered' && event.agent === e.agent : op.kind === 'fundEscrow' && event.type === 'escrow.funded' && event.amount === BigInt(e.funding!)))
         }
       } catch { /* No claim of confirmation without retrievable matching evidence. */ }

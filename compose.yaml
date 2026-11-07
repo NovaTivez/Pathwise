@@ -24,6 +24,13 @@ services:
     profiles: [tunnel]
     command: tunnel --no-autoupdate --url http://app:10000
     restart: unless-stopped
+  named-tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    env_file:
+      - path: .env.tunnel
+        required: true
+    command: tunnel --no-autoupdate run
 volumes:
   pathwise-data:
     name: pathwise-data

@@ -1,6 +1,6 @@
 import express from 'express'
 import type { ErrorRequestHandler } from 'express'
-import { createHash, randomBytes, randomUUID } from 'node:crypto'
+import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto'
 import { openDatabase } from './database.ts'
 import { validatePlan } from './learner.ts'
 import { paymentConfig } from './payment-config.ts'
@@ -18,6 +18,28 @@ import { operationalLog } from './logging.ts'
 import { publicApiLimiter } from './rate-limit.ts'
 
 const hash = (token: string) => createHash('sha256').update(token).digest('hex')
+function signatureMatches(raw: string, header: string, secret: string) {
+  let timestamp = '', signature = ''
+  for (const part of header.split(',')) {
+    const index = part.indexOf('=')
+    if (index === -1) continue
+    const key = part.slice(0, index).trim()
+    const value = part.slice(index + 1).trim()
+    if (key === 't') timestamp = value
+    if (key === 'v1') signature = value
+  }
+  if (!timestamp || !signature || !secret) return null
+  return createHmac('sha256', secret).update(`${timestamp}.${raw}`).digest('hex') === signature
+}
+function webhookRejectCode(error: unknown, matched: boolean | null) {
+  const message = error instanceof Error ? error.message : ''
+  if (message.includes('Missing signature')) return 'signature/missing'
+  if (message.includes('timestamp')) return 'signature/expired'
+  if (message.includes('Invalid signature header') || message.includes('Invalid timestamp')) return 'signature/format'
+  if (message.startsWith('Invalid webhook event:')) return 'event/shape'
+  if (matched === false || message === 'Signature mismatch') return 'signature/mismatch'
+  return 'verification/failed'
+}
 export function createApp(databasePath: string, webOrigin = 'http://localhost:5173', dependencies: { config?: ReturnType<typeof paymentConfig>; velo?: VeloPort; noir?: NoirPort; verifyVeloLedger?: VeloLedgerVerifier } = {}, hosting: { production?: boolean; frontendDir?: string; workerStatus?: () => { running: boolean; lastCompletedAt: number; inFlight: boolean } } = {}) {
   const db = openDatabase(databasePath)
   const app = express()
@@ -48,7 +70,8 @@ export function createApp(databasePath: string, webOrigin = 'http://localhost:51
       res.json(await velo.webhook(req.body.toString('utf8'), req.get('x-velo-signature') || null, req.get('x-velo-delivery') || null))
       operationalLog('velo_webhook_processed', { requestId: res.locals.requestId })
     } catch (error) {
-      operationalLog('velo_webhook_rejected', { requestId: res.locals.requestId, status: error instanceof VeloWebhookSignatureVerificationError ? 401 : 503 })
+      const matched = Buffer.isBuffer(req.body) ? signatureMatches(req.body.toString('utf8'), req.get('x-velo-signature') || '', config.velo.webhookSecret) : null
+      operationalLog('velo_webhook_rejected', { requestId: res.locals.requestId, operation: webhookRejectCode(error, matched), status: error instanceof VeloWebhookSignatureVerificationError ? 401 : 503 })
       res.status(error instanceof VeloWebhookSignatureVerificationError ? 401 : 503).json({ error: error instanceof VeloWebhookSignatureVerificationError ? 'Invalid webhook signature or envelope.' : 'Webhook not reconciled; retry delivery after resolving checkout configuration or status.' })
     }
   })

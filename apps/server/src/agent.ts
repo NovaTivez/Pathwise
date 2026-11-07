@@ -8,6 +8,7 @@ import { planPurchases } from './planner.ts'
 import type { Learner } from './planner.ts'
 import type { paymentConfig } from './payment-config.ts'
 import type { NoirPort } from './noir.ts'
+import { ledgerEvents } from './noir-events.ts'
 
 type Config = ReturnType<typeof paymentConfig>
 type Mode = 'simulation' | 'testnet'
@@ -124,7 +125,7 @@ export function agentService(db: DatabaseSync, config: Config, injected?: NoirPo
     } else if (tx.status === rpc.Api.GetTransactionStatus.SUCCESS) {
       const g = db.prepare('SELECT * FROM agent_grants WHERE id=?').get(o.grant_id) as unknown as Grant
       const e = exp(g)
-      const events = await client.pastEvents(o.start_ledger)
+      const events = await ledgerEvents(client, o.start_ledger)
       if (events.some(event => event.type === 'payment.authorized' && event.txHash === o.authorize_hash && event.deviceHash === e.device_hash && event.merchant === o.merchant && event.amount === BigInt(o.amount))) {
         db.prepare('UPDATE agent_orders SET status=\'authorized\', authorization_state=\'authorized\', reason=\'Authorization confirmed by transaction and matching Noir event.\' WHERE id=?').run(o.id); release(o.id)
       }
@@ -141,7 +142,7 @@ export function agentService(db: DatabaseSync, config: Config, injected?: NoirPo
         release(b.id); db.exec('COMMIT')
       } catch (error) { db.exec('ROLLBACK'); throw error }
     } else if (tx.status === rpc.Api.GetTransactionStatus.SUCCESS) {
-      const events = await client.pastEvents(b.start_ledger)
+      const events = await ledgerEvents(client, b.start_ledger)
       if (!events.some(e => e.type === 'payment.claimed' && e.txHash === b.hash && e.merchant === b.merchant && e.amount === BigInt(b.amount))) return
       db.exec('BEGIN IMMEDIATE')
       try {
