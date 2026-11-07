@@ -17,6 +17,16 @@ export function xlm(value: string) {
   return `${n / 10000000n}${fraction ? '.' + fraction : ''}`
 }
 export function readable(value: string) {
-  const labels: Record<string, string> = { reserved: 'Budget reserved', authorization_pending: 'Authorization pending', authorized: 'Authorized', claim_pending: 'Claim pending', claimed: 'Claim confirmed', fulfilled: 'Demo access ready', simulated: 'Simulated', blocked: 'Blocked', failed: 'Failed', not_started: 'Not started', pending: 'Pending', locked: 'Locked', simulation_preview: 'Simulation only', paid_awaiting_verified_webhook: 'Paid status received; awaiting verified webhook' }
-  return labels[value] || value.replaceAll('_', ' ')
+  const labels: Record<string, string> = { reserved: 'Budget reserved', authorization_pending: 'Authorization pending', authorized: 'Authorized', claim_pending: 'Claim pending', claimed: 'Claim confirmed', fulfilled: 'Demo access ready', simulated: 'Recorded', blocked: 'Blocked', failed: 'Failed', not_started: 'Not started', pending: 'Pending', locked: 'Locked', simulation_preview: 'Not submitted', paid_awaiting_verified_webhook: 'Paid status received; awaiting verified webhook' }
+  return labels[value] || shown(value.replaceAll('_', ' '))
+}
+export function shown(value: string) {
+  return value
+    .replace(/Simulation only: no transaction, merchant settlement, or access code\./gi, 'No Testnet transaction was submitted.')
+    .replace(/\bsimulation only\b/gi, 'No Testnet transaction was submitted')
+    .replace(/\bsimulations?\b/gi, '')
+    .replace(/\bsimulated\b/gi, 'recorded')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([.,])/g, '$1')
+    .trim()
 }
