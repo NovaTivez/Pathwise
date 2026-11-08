@@ -3,7 +3,7 @@
 A purchasing agent that helps certification learners fill skill gaps without spending their exam reserve.
 
 **Repository:** [NovaTivez/Pathwise](https://github.com/NovaTivez/Pathwise) - anonymous public access verified<br>
-**Live website:** [Open Pathwise](https://reaction-multi-cheaper-evaluation.trycloudflare.com/) - temporary tunnel; public HTTP and simulation checks passed<br>
+**Live website:** [Open Pathwise](https://epinions-founder-newman-afford.trycloudflare.com/) - temporary tunnel; keep this computer, Docker, and the internet running<br>
 **Demo video (2 min):** [Shared demo video folder](https://drive.google.com/drive/folders/19UYTxq1TZ-bwu-gO3E738Pvv7E1mnrOr?usp=sharing) - no video file visible signed out; playback/duration unverified<br>
 **Pitch deck:** User confirms it was included in the submission form; link/content/access not independently inspected<br>
 **Team:** Hannah Munoz (@Hactivex), Paul Miguel Roa (@rambobambo), Adrian Salim (@psychoscient)
