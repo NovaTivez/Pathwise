@@ -143,6 +143,15 @@ test('owner setup supports an approved secondary provider and rejects legacy exe
     sdk.prepare = async source => new TransactionBuilder(new Account(source, '0'), { fee: '100', networkPassphrase: Networks.TESTNET }).addOperation(Operation.manageData({ name: 'test-fixture', value: 'never submitted' })).setTimeout(300).build().toXDR()
     const ownerFlow = noirService(f.db, f.config, sdk)
     assert.ok((await ownerFlow.prepareOwner('session', 'registerDevice')).hash)
+    assert.equal(ownerFlow.status('session')!.ownerOperations[0].state, 'prepared')
+    await assert.rejects(ownerFlow.prepareOwner('session', 'registerDevice'), /Finish or reconcile/)
+    const operation = f.db.prepare('SELECT id FROM owner_operations').get()!
+    f.db.prepare('UPDATE owner_operations SET expires=? WHERE id=?').run(Date.now() - 1000, operation.id)
+    assert.equal(ownerFlow.status('session')!.ownerOperations[0].state, 'expired', 'expired unsigned preparation must not leave UI permanently waiting')
+    assert.equal(f.db.prepare('SELECT state FROM owner_operations WHERE id=?').get(operation.id)!.state, 'prepared', 'status projection must not alter transaction records')
+    await assert.rejects(ownerFlow.submitOwner('session', operation.id, 'not-a-signed-transaction'), /expired, used, or not found/)
+    f.db.prepare('UPDATE owner_operations SET state=\'pending\' WHERE id=?').run(operation.id)
+    assert.equal(ownerFlow.status('session')!.ownerOperations[0].state, 'pending', 'pending submissions remain uncertain even after preparation expiry')
     await assert.rejects(ownerFlow.run('session'), /purchasing agent/)
     await assert.rejects(ownerFlow.claim('session'), /worker/)
   } finally { f.close() }

@@ -49,7 +49,7 @@ export function noirService(db: DatabaseSync, config: Config, injected?: NoirPor
     status(session: string) {
       const row = db.prepare('SELECT * FROM noir_experiments WHERE session_hash=?').get(session) as Row | undefined
       if (!row) return null
-      return { id: row.id, planId: row.plan_id, owner: row.owner, deviceHash: row.device_hash, agent: row.agent, merchant: row.merchant, asset: row.asset, amountStroops: row.amount, fundingStroops: row.funding, limitStroops: row.limit_amount, expiresAt: new Date(Number(row.expires)).toISOString(), state: row.state, authorizeHash: row.authorize_hash, claimHash: row.claim_hash, ownerOperations: db.prepare('SELECT id, kind, hash, state FROM owner_operations WHERE experiment_id=? ORDER BY rowid').all(row.id) }
+      return { id: row.id, planId: row.plan_id, owner: row.owner, deviceHash: row.device_hash, agent: row.agent, merchant: row.merchant, asset: row.asset, amountStroops: row.amount, fundingStroops: row.funding, limitStroops: row.limit_amount, expiresAt: new Date(Number(row.expires)).toISOString(), state: row.state, authorizeHash: row.authorize_hash, claimHash: row.claim_hash, ownerOperations: db.prepare('SELECT id, kind, hash, state, expires FROM owner_operations WHERE experiment_id=? ORDER BY rowid').all(row.id).map(op => ({ ...op, state: op.state === 'prepared' && Number(op.expires) <= Date.now() ? 'expired' : op.state })) }
     },
     approve(session: string, planId: unknown) {
       ready()

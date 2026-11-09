@@ -8,9 +8,13 @@ import { once } from 'node:events'
 import { fileURLToPath } from 'node:url'
 import { validatePlan } from './learner.ts'
 import { openDatabase } from './database.ts'
-const valid = { goal: 'AWS Certified Cloud Practitioner', skills: ['Security'], formats: ['course'], budget: '30.0000001', limit: '10', reserve: '12.0000001' }
+const valid = { goal: 'AWS Certified Cloud Practitioner', career: 'cloud', timelineWeeks: 8, skills: ['Security'], formats: ['course'], budget: '30.0000001', limit: '10', reserve: '12.0000001' }
 test('validates every learner field and stores exact monetary values', () => {
   assert.equal(validatePlan(valid).budgetStroops, '300000001')
+  assert.equal(validatePlan(valid).career, 'cloud')
+  assert.equal(validatePlan(valid).timelineWeeks, 8)
+  assert.throws(() => validatePlan({ ...valid, career: 'data' }))
+  for (const timelineWeeks of ['8', 0, 9, 100, null]) assert.throws(() => validatePlan({ ...valid, timelineWeeks }), 'invalid timeline')
   for (const patch of [ { goal: '' }, { goal: 'Other exam' }, { skills: ['unknown'] }, { skills: [1] }, { formats: [] }, { formats: ['course', 'course'] }, { budget: 30 }, { budget: '1e3' }, { budget: '-1' }, { budget: '0' }, { budget: '1.00000001' }, { limit: '0' }, { limit: '31' }, { reserve: '31' }, { reserve: '-1' } ]) {
     assert.throws(() => validatePlan({ ...valid, ...patch }), JSON.stringify(patch))
   }
@@ -60,8 +64,17 @@ test('HTTP session isolation, validation, repeatable migrations and real process
     assert.equal((await request('agent/start', other, { grantId })).status, 400)
     await request('agent/start', owner, { grantId })
     await stop()
+    // Old JSON payloads remain readable; no existing payment or plan row is rewritten.
+    const legacy = openDatabase(path)
+    const stored = legacy.prepare('SELECT * FROM learner_plans WHERE id=?').get(saved.data.id)!
+    const legacyPayload = JSON.parse(String(stored.payload)); delete legacyPayload.career; delete legacyPayload.timelineWeeks
+    legacy.prepare('INSERT INTO learner_plans VALUES (?, ?, ?, ?)').run('legacy-plan', stored.session_hash, JSON.stringify(legacyPayload), stored.created_at)
+    legacy.close()
     base = await start()
     assert.deepEqual((await request('plans/' + saved.data.id, owner)).data, saved.data)
+    assert.equal((await request('plans/' + saved.data.id, owner)).data.timelineWeeks, 8)
+    assert.equal((await request('plans/' + saved.data.id, owner)).data.career, 'cloud')
+    assert.equal((await request('plans/legacy-plan', owner)).data.goal, valid.goal)
     assert.equal((await request('plans', owner)).data[0].budgetStroops, '300000001')
     assert.equal((await request('plans/' + saved.data.id, other)).status, 404)
     let agentStatus = (await request('agent/status', owner)).data[0]

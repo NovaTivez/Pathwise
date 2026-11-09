@@ -1,61 +1,83 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { Pathwise } from './usePathwise'
 import { Evidence, NeedGoal, ServiceSummary } from './components'
 import { BudgetSummary } from './LearningComponents'
-import { readable, xlm } from './ui'
+import { checkoutReadiness } from './learning'
+import { nextOwnerAction, ownerSteps, serviceAction } from './payment-journey'
+import { xlm } from './ui'
 
-const paySteps = [
-  { step: 6, label: 'Wallet' },
-  { step: 7, label: 'Service fee' },
-  { step: 8, label: 'Escrow' },
-]
-
-function PayProgress({ p }: { p: Pathwise }) {
-  return <ol className="setup-progress three" aria-label="Testnet setup steps">{paySteps.map((item, index) => {
-    const current = p.step === item.step
-    const locked = item.step === 8 && !p.grant
-    return <li key={item.step} className={current ? 'current' : item.step < p.step ? 'visited' : ''} aria-current={current ? 'step' : undefined}><button type="button" disabled={locked} onClick={() => p.go(item.step)}><span>{index + 1}</span><span>{item.label}</span></button></li>
-  })}</ol>
+function paymentReady(p: Pathwise) {
+  return checkoutReadiness(p.setup, p.previewOnly, Boolean(p.connectionError)).available
+    && p.approvedIds.length > 0 && p.approvedIds.every(id => Boolean(p.catalog?.providers.find(provider => provider.id === id)?.merchant))
 }
-
+function PayProgress({ p }: { p: Pathwise }) {
+  return <ol className="setup-progress three" aria-label="Testnet setup steps">{[[6, 'Wallet'], [7, 'Service payment'], [8, 'Spending authorization']].map(([step, label], index) => <li key={step} className={p.step === step ? 'current' : ''} aria-current={p.step === step ? 'step' : undefined}><span>{index + 1}</span><span>{label}</span></li>)}</ol>
+}
+function Blockers({ p }: { p: Pathwise }) {
+  const checkout = checkoutReadiness(p.setup, p.previewOnly, Boolean(p.connectionError))
+  const missing = p.approvedIds.filter(id => !p.catalog?.providers.find(provider => provider.id === id)?.merchant)
+  return !checkout.available || missing.length || !p.approvedIds.length ? <div className="notice" role="status"><p>{checkout.reason || 'Approved providers need configured Testnet merchant accounts before payment setup.'}</p><ul>{[...new Set([...(p.setup?.velo.blockers || []), ...(p.setup?.noir.blockers || []), ...missing.map(id => `${p.providerName(id)} needs a Testnet merchant account configured by the operator.`), ...(!p.approvedIds.length ? ['Select at least one provider and update recommendations.'] : [])])].map(item => <li key={item}>{item}</li>)}</ul><button className="text-button" onClick={() => p.go(2)}>Continue planning</button></div> : null
+}
 function PayFrame({ p, children }: { p: Pathwise; children: ReactNode }) {
   if (!p.activePlan) return <NeedGoal p={p} />
-  if (p.previewOnly) return <section className="empty"><h2>This path is for planning.</h2><p>The connected backend does not yet support purchases for this career. No checkout, wallet signature or spending authorization will be requested.</p><button onClick={() => p.go(2)}>Back to my roadmap</button></section>
-  return <div className="path-layout"><section className="pay-step"><PayProgress p={p} />{children}</section><div className="path-aside"><BudgetSummary p={p} /><p className="fine-print">The service fee is separate from this learning budget. Returning from Velo does not by itself turn purchasing on.</p></div></div>
+  if (p.previewOnly) return <section className="empty"><h2>This path is for planning.</h2><p>No checkout, wallet signature or spending authorization is supported for this career yet.</p><button onClick={() => p.go(2)}>Back to my roadmap</button></section>
+  return <div className="path-layout"><section className="pay-step"><PayProgress p={p} /><Blockers p={p} />{children}</section><aside className="path-aside"><BudgetSummary p={p} /><p className="fine-print">Velo service payment is separate from Noir learning escrow. Returning from checkout does not verify a payment.</p></aside></div>
 }
-
 export function AuthorizationView({ p }: { p: Pathwise }) {
-  const { activePlan, grant, busy } = p
-  if (!activePlan) return <NeedGoal p={p} />
-  if (p.previewOnly) return <section className="empty"><h2>This path is for planning.</h2><p>The connected backend does not yet support purchases for this career. No checkout, wallet signature or spending authorization will be requested.</p><button onClick={() => p.go(2)}>Back to my roadmap</button></section>
-  return <div className="path-layout"><section>
-    <section className="settings-section"><h2>Approved providers</h2><p>Test XLM is Stellar Testnet currency. This demo does not charge real money. Only the demo providers you check here can be paid.</p><fieldset disabled={busy || Boolean(grant)}><legend className="sr-only">Approved demo providers</legend>{p.catalog?.providers.map(provider => <label className="provider-choice" key={provider.id}><input type="checkbox" checked={p.approvedIds.includes(provider.id)} onChange={() => p.toggleProvider(provider.id)} /><span><strong>{provider.name}</strong><small>Demo provider · {provider.merchant ? 'Testnet account configured' : 'Testnet account needs setup'}</small></span></label>)}</fieldset></section>
-    <section className="settings-section"><h2>Spending limits</h2><p>Up to <strong>{xlm(p.metrics.remaining)} test XLM</strong> is available for learning resources. Each resource must cost no more than <strong>{xlm(grant?.perPurchaseLimitStroops || activePlan.limitStroops)} test XLM</strong>. Purchases cannot use the exam reserve, repeat a resource, or pay an unapproved provider.</p><p className="fine-print">{grant ? `Rules expire ${new Date(grant.expiresAt).toLocaleString()}.` : 'Authorization lasts one hour from approval.'} The Velo service fee is separate from this learning budget.</p></section>
-    <div className="bottom-actions"><button className="text-button" onClick={() => p.go(2)}>← Roadmap</button>{grant ? <button onClick={() => p.go(p.resumeSetup())}>Continue setup →</button> : p.selected.length ? <button onClick={() => p.go(6)} disabled={busy || !p.approvedIds.length || !p.catalog}>Continue to wallet →</button> : <button disabled={busy || !p.approvedIds.length || !p.catalog} onClick={() => void p.act(p.buildRoadmap)}>Find resources within these rules →</button>}</div>
-  </section><div className="path-aside"><BudgetSummary p={p} /><p className="fine-print">Wallet, service fee, and escrow are the next three steps.</p></div></div>
+  if (!p.activePlan) return <NeedGoal p={p} />
+  const ready = paymentReady(p)
+  const total = p.selected.reduce((sum, d) => sum + BigInt(d.priceStroops), 0n)
+  const eligible = p.compared && p.selected.length > 0 && total <= BigInt(p.metrics.remaining) && p.selected.every(d => p.approvedIds.includes(d.providerId) && BigInt(d.priceStroops) <= BigInt(p.grant?.perPurchaseLimitStroops || p.activePlan!.limitStroops))
+  return <PayFrame p={p}><section className="settings-section"><h2>Review spending</h2><p>Only selected demo providers may receive Testnet learning-resource payments. Saving these choices does not authorize spending.</p>
+    <fieldset disabled={p.busy || Boolean(p.grant)}><legend>Approved providers</legend>{p.catalog?.providers.map(provider => <label className="provider-choice" key={provider.id}><input type="checkbox" checked={p.approvedIds.includes(provider.id)} onChange={() => p.toggleProvider(provider.id)} /><span><strong>{provider.name}</strong><small>{provider.merchant ? 'Testnet account configured' : 'Testnet merchant account needs operator setup'}</small></span></label>)}</fieldset>
+    {!p.compared && <p role="status">The provider list changed or recommendations are missing. Update recommendations before continuing.</p>}
+    {p.compared && p.selected.length > 0 && <ul className="review-resources">{p.selected.map(d => <li key={d.resourceId}><strong>{p.resource(d.resourceId)?.title || d.resourceId}</strong><p>{p.providerName(d.providerId)} · {xlm(d.priceStroops)} test XLM</p><p>{d.reason}</p></li>)}</ul>}
+    <dl className="rule-list"><div><dt>Selected resource total</dt><dd>{p.compared ? `${xlm(total.toString())} test XLM` : 'Update required'}</dd></div><div><dt>Available prep allowance</dt><dd>{xlm(p.metrics.remaining)} test XLM</dd></div><div><dt>Per-resource cap</dt><dd>{xlm(p.grant?.perPurchaseLimitStroops || p.activePlan.limitStroops)} test XLM</dd></div><div><dt>Protected exam reserve</dt><dd>{xlm(p.metrics.reserve)} test XLM</dd></div></dl>
+    <p>{p.grant ? `Authorization expires ${new Date(p.grant.expiresAt).toLocaleString()}. Approved rules cannot be edited.` : 'Authorization lasts one hour from approval after the service payment. The timer includes wallet setup transactions.'}</p><p>Velo service fee: {p.setup?.velo.amount || 'Unavailable'} test XLM, additional to the learning allowance. Your reserve stays outside Noir escrow.</p>
+    {p.compared && !eligible && !p.grant && <p>No eligible purchase remains. Return to your roadmap for free resources or adjust your budget.</p>}
+  </section><div className="bottom-actions"><button className="text-button" onClick={() => p.go(2)}>Back to roadmap</button>{!p.compared && !p.grant ? <button disabled={p.busy || !p.approvedIds.length || !p.catalog} onClick={() => void p.act(() => p.buildRoadmap(true), 'Recommendations updated. Review the new purchase plan.')}>Update recommendations</button> : ready && (eligible || p.grant) ? <button disabled={p.busy} onClick={() => p.go(p.grant ? p.resumeSetup() : 6)}>{p.grant ? 'Continue setup' : 'Continue to wallet'}</button> : null}</div></PayFrame>
 }
-
 export function WalletPage({ p }: { p: Pathwise }) {
-  const { setup, busy } = p
-  return <PayFrame p={p}><section className="settings-section"><div className="section-heading"><h2>Verify the wallet that approves spending.</h2><span className={`status ${setup?.wallet ? 'good' : ''}`}>{setup?.wallet ? 'Verified' : 'Not connected'}</span></div><p>Sign a one-use ownership challenge in Noir on Stellar Testnet. Your keys stay in your wallet. The next page is only the service fee.</p><button disabled={busy} onClick={() => void p.act(p.connect, setup?.wallet ? 'Wallet ownership verified again for this session.' : 'Wallet ownership verified. Continue to the service fee.')}>{setup?.wallet ? 'Verify wallet again' : 'Connect & verify Noir wallet'}</button><details><summary>Wallet setup & connected account</summary>{setup?.wallet && <code className="address">{setup.wallet.owner}</code>}<p>Install Noir from its official listing, select Stellar Testnet and fund the public address using Friendbot. Never enter an owner secret key in Pathwise.</p><a href="https://chromewebstore.google.com/detail/noir/gikfhchijjljpbhokmdmaadgmpbchmjl" target="_blank" rel="noreferrer">Official Noir extension ↗</a></details></section><div className="bottom-actions"><button className="text-button" onClick={() => p.go(1)}>← Spending rules</button><button onClick={() => p.go(7)} disabled={!setup?.wallet}>Continue to service fee →</button></div></PayFrame>
+  const verified = Boolean(p.setup?.wallet), ready = paymentReady(p)
+  return <PayFrame p={p}><section className="settings-section"><h2>{verified ? 'Wallet ownership verified' : 'Connect Noir wallet'}</h2><p>Connecting signs a one-use ownership challenge on Stellar Testnet. It proves this wallet belongs to you; it does not pay the service fee or authorize resource spending. Owner keys stay in Noir.</p>
+    {!verified && <div className="wallet-help"><h3>First time using Noir?</h3><ol><li><a href="https://chromewebstore.google.com/detail/noir/gikfhchijjljpbhokmdmaadgmpbchmjl" target="_blank" rel="noreferrer">Install the official Noir extension</a>, then return here.</li><li>Create or open your wallet in the extension and select Stellar Testnet.</li><li>Use Testnet Friendbot funding in your wallet, or visit <a href="https://laboratory.stellar.org/#account-creator?network=test" target="_blank" rel="noreferrer">Stellar Laboratory</a> with only your public address. Never enter wallet secrets in Pathwise.</li></ol></div>}
+    {verified && <details><summary>Connected public account</summary><code className="address">{p.setup!.wallet!.owner}</code></details>}
+    {ready && <button disabled={p.busy} onClick={() => verified ? p.go(7) : void p.act(p.connect, 'Wallet ownership verified. Continue to service payment.')}>{verified ? 'Continue to service payment' : 'Connect Noir wallet'}</button>}
+  </section><button className="text-button" onClick={() => p.go(1)}>Back to spending review</button></PayFrame>
 }
-
 export function FeePage({ p }: { p: Pathwise }) {
-  const { activePlan, setup, grant, busy } = p
+  const action = serviceAction(p.setup, p.activePlan?.id || '', p.serviceReady)
+  const amount = p.setup?.checkout?.planId === p.activePlan?.id ? p.setup?.checkout?.amount : p.setup?.velo.amount
+  const ready = paymentReady(p)
   async function payInVelo() {
-    if (!activePlan) throw new Error('Save a goal before paying the service fee.')
+    if (!p.activePlan) throw new Error('Save a goal before paying the service fee.')
     const popup = window.open('about:blank', 'pathwise-velo')
-    if (!popup) throw new Error('Allow pop-ups for Pathwise, then try again. This step stays open.')
+    if (!popup) throw new Error('Allow pop-ups for Pathwise, then try again.')
     try {
-      const created = await p.api('service/checkout', { planId: activePlan.id }) as { checkoutUrl?: string | null }
-      if (!created?.checkoutUrl) { popup.close(); throw new Error('No Velo checkout link was returned. Stay on this step and try again.') }
+      const created = await p.api('service/checkout', { planId: p.activePlan.id }) as { checkoutUrl?: string | null }
+      if (!created.checkoutUrl) throw new Error('No checkout link was returned. Check payment status before retrying.')
       popup.location.replace(created.checkoutUrl)
     } catch (error) { popup.close(); throw error }
   }
-  return <PayFrame p={p}><section className="settings-section"><h2>Pay the 1 test XLM service fee in Velo.</h2><ServiceSummary p={p} /><p>Velo opens in another tab. After payment, that tab closes and this step stays put. If the tab cannot close, it opens this same service-fee step instead of the homepage.</p><div className="button-row"><button disabled={busy || !setup?.wallet || !setup?.velo.ready} onClick={() => void p.act(payInVelo, 'Velo is open in another tab. Stay on this service fee step.')}>Pay service fee in Velo</button><button className="text-button" disabled={busy || !setup?.checkout} onClick={() => void p.act(() => p.api('service/refresh', {}), 'Payment status retrieved. Activation also requires the matching verified webhook and Testnet transaction.')}>Check payment status</button></div>{Boolean(setup?.velo.blockers.length) && <details className="integration-details"><summary>Service fee needs attention</summary><ul>{setup?.velo.blockers.map(item => <li key={item}>{item}</li>)}</ul></details>}</section><div className="bottom-actions"><button className="text-button" onClick={() => p.go(6)}>← Wallet</button>{grant ? <button onClick={() => p.go(8)}>Continue to escrow →</button> : <button disabled={busy || !p.serviceReady || !p.approvedIds.length || !setup?.noir.ready} onClick={() => void p.act(p.approve, 'Rules approved. Sign the escrow steps next.')}>Approve rules & continue to escrow →</button>}</div></PayFrame>
+  return <PayFrame p={p}><section className="settings-section"><h2>{amount ? `${amount} test XLM service payment` : 'Service payment unavailable'}</h2><ServiceSummary p={p} /><p>Velo pays for the Pathwise service. It does not fund Noir learning escrow or purchase any course. Testnet only; no real funds.</p>
+    {action === 'wallet' && <><p>Verify wallet ownership before opening checkout.</p>{ready && <button onClick={() => p.go(6)}>Connect Noir wallet</button>}</>}
+    {action === 'mismatch' && <p role="alert">The stored checkout belongs to another goal. Resume that original plan; do not pay again for this plan.</p>}
+    {action === 'pay' && ready && <button disabled={p.busy} onClick={() => void p.act(payInVelo, 'Checkout opened in another tab. Return here to check payment status.')}>Pay {amount} test XLM service fee</button>}
+    {action === 'check' && <><p>Awaiting backend verification. A successful browser redirect is not proof of payment. Checking status reuses the saved checkout.</p><button disabled={p.busy} onClick={() => void p.act(() => p.setup?.checkout?.intentId ? p.api('service/refresh', {}) : p.api('service/checkout', { planId: p.activePlan?.id }), 'Status checked. Continue only when the backend confirms the payment.')}>Check payment status</button>{p.setup?.checkout?.checkoutUrl && !['paid', 'paid_awaiting_verified_webhook', 'failed', 'expired'].includes(p.setup.checkout.status) && ready && <button className="text-button" disabled={p.busy} onClick={() => void p.act(payInVelo)}>Reopen saved checkout</button>}{p.setup?.checkout && ['failed', 'expired', 'cancelled'].includes(p.setup.checkout.status) && <p>Checkout {p.setup.checkout.status}. Check its saved status, then ask the operator to reconcile this checkout. Do not create a replacement payment.</p>}</>}
+    {action === 'continue' && ready && <button disabled={p.busy || !p.approvedIds.length || !p.selected.length} onClick={() => p.grant ? p.go(8) : void p.act(p.approve, 'Spending rules approved. Complete the Noir signatures in order.')}>Continue to spending authorization</button>}
+  </section><button className="text-button" onClick={() => p.go(6)}>Back to wallet</button></PayFrame>
 }
-
 export function EscrowPage({ p }: { p: Pathwise }) {
-  const { setup, grant, busy } = p
-  return <PayFrame p={p}>{!grant ? <section className="settings-section"><h2>Escrow starts after the rules are approved.</h2><p>Finish the service fee step, then approve the spending rules. Nothing in escrow is signed from this page until then.</p><button onClick={() => p.go(7)}>Back to service fee</button></section> : <section className="settings-section"><h2>Sign the learning escrow in your owner wallet.</h2><p>The approved deposit is <strong>{xlm(setup?.experiment?.fundingStroops || grant.totalBudgetStroops)} test XLM</strong>. Your exam reserve stays outside this escrow. Review and sign each step in order.</p><div className="owner-actions">{[['registerDevice', 'Register demo device'], ['registerAgent', 'Grant agent policy'], ['fundEscrow', 'Fund learning escrow']].map(([kind, label]) => { const op = setup?.experiment?.ownerOperations.find(item => item.kind === kind && ['pending', 'confirmed'].includes(item.state)); return <div className="owner-step" key={kind}><span className="status">{op ? readable(op.state) : 'Signature needed'}</span><h3>{label}</h3><button className="secondary" disabled={busy || Boolean(op) || !setup?.experiment} onClick={() => void p.act(() => p.signOwner(kind), `${label} submitted. This escrow step stays open.`)}>{op?.state === 'confirmed' ? 'Confirmed' : 'Review & sign'}</button>{op && <Evidence hash={op.hash} label="Setup transaction" />}</div> })}</div><details><summary>Reconcile uncertain wallet transactions</summary><p>Check known hashes before retrying an uncertain operation.</p><button className="text-button" disabled={busy} onClick={() => void p.act(() => p.api('noir/reconcile', {}), 'Known hashes checked. Unconfirmed operations remain pending.')}>Reconcile setup transactions</button></details>{Boolean(setup?.noir.blockers.length) && <details className="integration-details"><summary>Escrow setup needs attention</summary><ul>{setup?.noir.blockers.map(item => <li key={item}>{item}</li>)}</ul></details>}</section>}<div className="bottom-actions"><button className="text-button" onClick={() => p.go(7)}>← Service fee</button><button onClick={() => p.go(3)} disabled={!grant || !p.ownerReady || !p.serviceReady || !setup?.noir.ready}>Review & start Testnet agent →</button></div></PayFrame>
+  const [now, setNow] = useState(Date.now)
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 15000); return () => clearInterval(timer) }, [])
+  const operations = p.setup?.experiment?.ownerOperations || [], next = nextOwnerAction(operations)
+  const ready = paymentReady(p)
+  const expired = Boolean(p.grant && Date.parse(p.grant.expiresAt) <= now)
+  const step = ownerSteps.find(s => s.kind === next.kind)
+  return <PayFrame p={p}>{!p.grant || !p.serviceReady ? <section><h2>Verify service payment first</h2><p>Spending authorization needs the verified service payment and an approved plan.</p><button onClick={() => p.go(7)}>Back to service payment</button></section> : <section className="settings-section"><h2>Authorize spending with Noir</h2><p>Sign three steps in order. The learning deposit is <strong>{xlm(p.setup?.experiment?.fundingStroops || (BigInt(p.grant.totalBudgetStroops) - BigInt(p.grant.reserveStroops)).toString())} test XLM</strong>. The protected reserve and Velo fee are separate.</p>
+    {expired && <p role="alert">Authorization expired. New signatures and purchases are blocked. Check existing transactions; operator assistance is needed to resume this immutable authorization safely.</p>}
+    <ol className="completed-signatures">{ownerSteps.filter(s => operations.some(op => op.kind === s.kind && op.state === 'confirmed')).map(s => <li key={s.kind}>{s.label}: Confirmed</li>)}</ol>
+    {next.state === 'check' ? <div className="notice"><h3>Check transaction status</h3><p>{step?.label || 'Wallet transaction'} is prepared or has an uncertain outcome. Do not sign another transaction. An unsigned preparation expires after five minutes; a submitted transaction must be reconciled.</p><button disabled={p.busy} onClick={() => void p.act(() => p.api('noir/reconcile', {}), 'Known transactions checked. Pending outcomes remain blocked.')}>Check transaction status</button></div> : next.state === 'sign' && step ? <div className="owner-step"><h3>{step.label}</h3><p>{step.explanation}</p>{operations.some(op => op.kind === step.kind && op.state === 'failed') && <p>The previous transaction failed on chain. You may review a new signature.</p>}<button disabled={p.busy || expired || !ready || !p.setup?.experiment || !p.setup?.wallet} onClick={() => void p.act(() => p.signOwner(step.kind), 'Signature submitted. Checking the confirmed state before the next step.')}>{step.label}</button></div> : <><p>All three wallet transactions are confirmed. Review the resources before starting the agent.</p><button disabled={p.busy || !ready || !p.ownerReady || expired} onClick={() => p.go(3)}>Review purchase</button></>}
+    <details><summary>Setup transaction evidence</summary>{operations.map(op => <div key={op.id}><p>{op.kind}: {op.state}</p><Evidence hash={op.hash} label="Setup transaction" /></div>)}</details>
+  </section>}<button className="text-button" onClick={() => p.go(7)}>Back to service payment</button></PayFrame>
 }

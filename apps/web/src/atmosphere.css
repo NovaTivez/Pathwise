@@ -1,4 +1,31 @@
 /* Static paper and grid. Motion is reserved for control feedback and loading. */
+.site-header button.setup-resume { display: inline-flex; white-space: normal; min-height: 44px; }
+.receipt-card .access-code code { overflow-wrap: anywhere; white-space: normal; }
+@media (max-width: 1000px) { .site-header button.setup-resume { display: inline-flex; font-size: 12px; padding: 10px 12px; } }
+@media (max-width: 700px) { .site-header button.setup-resume { display: inline-flex; order: 2; width: 100%; justify-content: center; } .site-header:has(.setup-resume) .top-nav { order: 3; } html:has(.setup-resume) { scroll-padding-top: 150px; } }
+.career-preview .career-support, .career-choice .career-support { display: block; width: fit-content; max-width: 100%; box-sizing: border-box; padding: 5px 9px; margin-top: 6px; border: 1px solid #c7b1e1; border-radius: 8px; background: #f0e7ff; color: #503273; font-size: 12px; line-height: 1.5; white-space: normal; }
+.career-preview .career-goal, .career-choice .career-goal { display: block; font-size: 12px; line-height: 1.6; color: #503e60; overflow-wrap: anywhere; }
+.budget-field-copy { min-width: 0; flex: 1; }
+.budget-field-copy small { display: block; margin-top: 6px; font-size: 12px; line-height: 1.6; color: #685b73; }
+.hero-copy .resume-plan { display: block; margin-top: 12px; }
+@media (max-width: 700px) { .career-preview .career-goal, .career-preview .career-support, .career-preview > small { grid-column: 2; } .career-preview .career-support { display: block; } .budget-field-copy { width: 100%; } }
+.pay-step .owner-step { display: flex; flex-direction: column; align-items: flex-start; }
+.pay-step .owner-step p { margin-block: 0 12px; }
+.pay-step .owner-step button { min-height: 44px; white-space: normal; }
+.wallet-help { padding: 16px 20px; background: #f0e7ff; border-radius: 12px; margin-block: 20px; }
+.wallet-help li, .completed-signatures li, .review-resources li, .prerequisite-list li { margin-block: 12px; line-height: 1.65; }
+.review-resources p { margin-block: 6px; }
+.recommendation-layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 28px; align-items: start; }
+.recommendation-layout > *, .recommendation-budget dd { min-width: 0; }
+.recommendation-budget { padding: 24px; border: 1px solid #ded6e6; border-radius: 14px; background: #fffefa; }
+.recommendation-budget h2 { font-size: 22px; margin-top: 0; }
+.recommendation-budget .rule-list > div { gap: 12px; }
+.recommendation-budget dd { text-align: right; overflow-wrap: anywhere; }
+.recommendation-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.recommendation-actions > button { width: 100%; white-space: normal; }
+.roadmap-milestones, #free-learning { scroll-margin-top: 120px; }
+.roadmap-review > details { margin-block: 24px; }
+@media (max-width: 900px) { .recommendation-layout { grid-template-columns: minmax(0, 1fr); } .recommendation-layout .roadmap-resource-grid { grid-template-columns: minmax(0, 1fr); } }
 .home-hero { isolation: isolate; gap: 48px; padding-block: 64px; }
 .hero-atmosphere {
   position: absolute;

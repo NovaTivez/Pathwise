@@ -1,0 +1,328 @@
+/* Academic Editorial / Guided Mastery. Implemented locally from the supplied Stitch export. */
+@font-face{font-family:'Plus Jakarta Sans';src:url('/fonts/plus-jakarta-sans.ttf') format('truetype');font-style:normal;font-weight:400 800;font-display:swap}
+@font-face{font-family:Inter;src:url('/fonts/inter.ttf') format('truetype');font-style:normal;font-weight:400 700;font-display:swap}
+:root{--bg:#fff7fc;--surface:#fff;--sidebar:#feefff;--raised:#f7e8ff;--border:#eaddf0;--text:#2a0f3a;--muted:#5e4b69;--accent:#500088;--accent-light:#500088;--accent-hover:#6b21a8;--nav:#fff7fc;--control-border:#cfc2d4;--focus:#7c3aed;--journey-paper:#fff7fc;--journey-purple:#500088;--journey-ink:#2a0f3a;--radius-card:16px;--radius-control:8px}
+body{margin:0;background:var(--bg);font-family:Inter,'Segoe UI',sans-serif}
+*{box-sizing:border-box}
+.stitch-app{color:var(--text);overflow-x:clip;min-height:100vh}
+.ui-icon{width:21px;height:21px;flex-shrink:0;vertical-align:middle}
+.stitch-app h1,.stitch-app h2,.stitch-app h3,.brand-loading strong{font-family:'Plus Jakarta Sans',Inter,sans-serif;color:var(--text)}
+.stitch-app h1{font-size:36px;line-height:1.23;font-weight:800;letter-spacing:-1.3px;margin:0 0 16px;max-width:960px}
+.stitch-app h2{font-size:24px;line-height:1.4;letter-spacing:-.65px;font-weight:700}
+.stitch-app h3{font-size:18px;line-height:1.5;letter-spacing:-.3px}
+.stitch-app p{font-size:14px;line-height:1.8;color:var(--muted)}
+.stitch-app .fine-print,.stitch-app small{font-size:12px;line-height:1.65}
+.stitch-app .eyebrow{display:flex;align-items:center;gap:7px;font-size:10px;line-height:1.6;letter-spacing:.08em;font-weight:700;color:var(--accent)}
+.stitch-app .eyebrow .ui-icon{width:15px;height:15px}
+.stitch-app button,.stitch-app .button-link{font-family:Inter,sans-serif;font-size:13px;line-height:1.5;min-height:44px;border-radius:8px;background:var(--accent);color:#fff;padding:12px 20px;font-weight:600;border:1px solid transparent;box-shadow:none;transform:none;transition:background-color 140ms,border-color 140ms}
+.stitch-app button:hover:not(:disabled){background:#6b21a8;transform:none;box-shadow:none}
+.stitch-app button:active:not(:disabled){background:#6b21a8;transform:none}
+.stitch-app button:disabled{background:#f0e8f4;color:#756880;border-color:#e3d7e9;cursor:not-allowed}
+.stitch-app button.secondary,.stitch-app .secondary{background:#f7e8ff;border-color:transparent;color:var(--accent)}
+.stitch-app button.secondary:hover:not(:disabled){background:#efdcfa;border-color:#dbc2ec;color:var(--accent)}
+.stitch-app button.text-button{background:transparent;color:var(--accent);padding:10px 0;border:0;justify-content:flex-start}
+.stitch-app button.text-button:hover:not(:disabled){background:transparent;text-decoration:underline}
+.stitch-app a{color:var(--accent)}
+.stitch-app .skip-link{z-index:100;background:white;border:1px solid var(--border);border-radius:8px}
+.stitch-app :is(button,a,input,select,summary):focus-visible{outline:2px solid #7c3aed;outline-offset:3px}
+.stitch-app summary{min-height:44px;font-weight:600;font-size:13px;color:var(--accent);cursor:pointer}
+.stitch-app .testnet-label{display:inline-flex;gap:7px;align-items:center;padding:6px 10px;background:#f7e8ff;color:var(--accent);border-radius:999px;font-size:11px;line-height:1.5;font-weight:500;white-space:normal}
+.stitch-app .testnet-label i{width:6px;height:6px;background:#500088;border-radius:50%}
+.stitch-app .status{background:#f2ddff;color:#500088;font-size:11px;border-radius:999px;padding:5px 10px;font-weight:500}
+.stitch-app .status.good{background:#d1fae5;color:#065f46}
+.stitch-app .status.warning{background:#fef3c7;color:#92400e}
+.stitch-app .notice{border:1px solid #e2cbee;border-left:3px solid #6b21a8;border-radius:12px;background:#f7e8ff;padding:18px 20px;font-size:13px;margin-bottom:24px;color:#3a1a4f}
+.stitch-app .notice.error{background:#fff1f2;border-color:#fecdd3;border-left-color:#e11d48;color:#9f1239}
+.stitch-app .notice p{font-size:13px}
+.stitch-app .notice ul{padding-left:20px}
+.stitch-app .empty{border:1px solid var(--border);border-radius:16px;padding:40px 24px;background:#fff}
+.stitch-app .site-header{position:sticky;top:0;min-height:80px;height:auto;padding:16px max(28px,calc((100vw - 1360px)/2));background:#fff7fcf5;backdrop-filter:blur(12px);border-bottom:1px solid #f3e9f5;display:flex;gap:28px;z-index:40}
+.stitch-app .site-header .brand,.stitch-app .footer-brand{display:inline-flex;align-items:center;gap:10px;color:#220b31;font-family:'Plus Jakarta Sans',Inter,sans-serif;font-size:25px;font-weight:800;letter-spacing:-1px;text-decoration:none;flex-shrink:0}
+.stitch-app .brand .ui-icon{width:29px;height:29px;color:var(--accent)}
+.stitch-app .top-nav{display:flex;align-items:center;gap:5px;margin:0;padding:0;background:none;border:0;box-shadow:none}
+.stitch-app .top-nav button{display:flex;gap:12px;background:transparent;color:#2a0f3a;font-size:12px;padding:10px 13px;min-height:38px;white-space:nowrap;font-weight:500;border-radius:8px}
+.stitch-app .top-nav button .ui-icon{display:none}
+.stitch-app .top-nav button.active{background:#e6bdfd;color:#500088}
+.stitch-app .top-nav button:hover{background:#f4e3fc;color:#500088}
+.stitch-app .header-status{margin-left:auto;display:flex;align-items:center;gap:12px;min-width:0}
+.stitch-app .session-label{font-size:12px;font-weight:500;color:var(--muted)}
+.stitch-app .menu-toggle{display:none}
+.stitch-app.is-home main{max-width:1360px;padding:0 40px 24px;margin:0 auto;min-width:0}
+/* A backdrop filter would make the header the containing block for its fixed
+   sidebar, collapsing the navigation into a small scrolling strip. */
+.stitch-app.is-workspace .site-header{position:fixed;left:248px;right:0;top:0;min-height:80px;padding:16px 32px;background:#fff7fc;backdrop-filter:none;-webkit-backdrop-filter:none}
+.stitch-app.is-workspace .brand{position:fixed;top:0;left:0;width:248px;height:80px;padding:22px 24px;background:#feefff}
+.stitch-app.is-workspace .workspace-track{display:flex;align-items:center;gap:8px;background:#f7e8ff;border-radius:999px;color:#3a1a4f;font-size:12px;padding:8px 12px;font-weight:600;max-width:58%;line-height:1.5}
+.stitch-app.is-workspace .workspace-track .ui-icon{width:16px;height:16px}
+.stitch-app.is-workspace .top-nav{position:fixed;left:0;top:80px;bottom:0;width:248px;padding:18px 16px;display:flex;flex-direction:column;align-items:stretch;gap:8px;background:#feefff;border-right:1px solid #f7e8fb;overflow-y:auto}
+.stitch-app.is-workspace .top-nav button{padding:14px 18px;font-size:14px;min-height:48px;justify-content:flex-start;white-space:normal}
+.stitch-app.is-workspace .top-nav button .ui-icon{display:inline-block}
+.stitch-app .sidebar-track{padding:12px 14px;background:#fae8ff;border-radius:12px;margin-bottom:14px;line-height:1.5}
+.stitch-app .sidebar-track strong{display:block;font-size:13px;color:var(--accent);margin-top:5px}
+.stitch-app .sidebar-note{margin-top:auto;padding:20px 16px;background:#fff;border-radius:16px;color:var(--accent)}
+.stitch-app .sidebar-note>strong{display:block;font-size:13px;margin-block:10px}
+.stitch-app .sidebar-note p{font-size:12px;margin-bottom:14px}
+.stitch-app.is-workspace main{margin:80px 0 0 248px;width:calc(100% - 248px);max-width:none;padding:36px 36px 24px;min-width:0}
+.stitch-app .journey-intro{padding:26px 28px;margin-bottom:28px;border-radius:20px;background:#fbeaff;position:relative}
+.stitch-app .journey-intro .eyebrow{margin-bottom:10px}
+.stitch-app .journey-intro h1{font-size:32px;margin-bottom:6px}
+.stitch-app .journey-intro p{margin:8px 0 0;max-width:680px}
+.stitch-app footer{display:flex;justify-content:space-between;gap:24px;align-items:center;margin-top:48px;border-top:1px solid var(--border);padding-top:28px;font-size:11px;color:var(--muted)}
+.stitch-app .footer-brand{font-size:21px}
+.stitch-app .home-hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:center;gap:56px;padding:64px 0 52px;position:relative}
+.stitch-app .hero-copy h1{font-size:clamp(36px,3.4vw,52px);line-height:1.16;letter-spacing:-1.8px;margin:24px 0 20px;font-weight:800}
+.stitch-app .hero-copy h1 em{font-style:normal;color:#500088}
+.stitch-app .hero-copy>p{font-size:15px;line-height:1.8;max-width:590px}
+.stitch-app .hero-copy>.eyebrow{font-size:10px;letter-spacing:.035em}
+.stitch-app .hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin:26px 0}
+.stitch-app .hero-copy .resume-plan{display:inline-flex;margin:0}
+.stitch-app .hero-trust{display:flex;flex-wrap:wrap;gap:16px;margin-top:22px}
+.stitch-app .hero-trust>span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.stitch-app .hero-trust .ui-icon{width:15px;height:15px;color:#500088}
+.stitch-app .home-hero{isolation:isolate}
+.stitch-app .hero-atmosphere{position:absolute;inset:0 -40px;background:linear-gradient(100deg,#fff7fc,#fceaff88,#fff7fc);border-radius:0;z-index:-1;pointer-events:none;overflow:hidden}
+.stitch-app .hero-atmosphere>span{position:absolute;inset:0;pointer-events:none}
+.stitch-app .hero-grid{background-image:linear-gradient(#74538a12 1px,transparent 1px),linear-gradient(90deg,#74538a12 1px,transparent 1px);background-size:24px 24px;opacity:.55;mask-image:radial-gradient(ellipse at center,#000 15%,transparent 80%)}
+.stitch-app .hero-grain{background:url('/textures/grain.svg') repeat;background-size:128px;opacity:.02}
+.stitch-app .hero-roadmap{background:#fbe8ff;border:1px solid #f2dcfb;padding:28px;border-radius:20px;box-shadow:0 6px 20px #2d123d0b;transform:none}
+.stitch-app .preview-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.stitch-app .preview-top .eyebrow{font-size:9px;letter-spacing:.04em}
+.stitch-app .hero-roadmap h2{font-size:22px;margin:18px 0 24px}
+.stitch-app .hero-roadmap h2>span{display:block;font-family:Inter,sans-serif;font-size:12px;font-weight:400;letter-spacing:0;margin-top:5px;color:#5e4b69}
+.stitch-app .hero-roadmap ol{list-style:none;margin:0;padding:0;display:grid;gap:16px}
+.stitch-app .hero-roadmap li{position:relative;display:flex;align-items:center;gap:12px;padding:16px;background:#fff;border-radius:12px;min-width:0}
+.stitch-app .hero-roadmap li:not(:last-child)::after{content:'';position:absolute;left:31px;top:100%;height:16px;border-left:1px solid #d7b8ed}
+.stitch-app .hero-roadmap li b{display:grid;place-items:center;background:#f7e8ff;color:#500088;width:32px;height:32px;flex:0 0 32px;border-radius:50%;font-weight:500}
+.stitch-app .hero-roadmap li:first-child{background:#fff;color:var(--text)}
+.stitch-app .hero-roadmap li strong{display:block;font-size:13px;color:var(--text)}
+.stitch-app .hero-roadmap li small,.stitch-app .hero-roadmap li:first-child small{font-size:11px;color:var(--muted);display:block;margin-top:4px}
+.stitch-app .preview-note{display:flex;align-items:center;gap:10px;background:#fff;padding:15px;margin-top:20px;border-radius:12px;font-size:11px;color:var(--muted)}
+.stitch-app .home-principles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;background:#fbeaff;padding:25px 28px;margin-inline:-40px}
+.stitch-app .home-principles>div{display:grid;grid-template-columns:28px 1fr;gap:4px 10px}
+.stitch-app .home-principles .ui-icon{grid-row:1/3;color:#6b21a8}
+.stitch-app .home-principles strong{font-size:14px}
+.stitch-app .home-principles span{font-size:12px;color:var(--muted)}
+.stitch-app .home-section{padding:52px 0}
+.stitch-app .home-section h2,.stitch-app .how-section h2{font-size:30px;line-height:1.3;margin:10px 0 12px}
+.stitch-app .home-section .section-heading{align-items:flex-end;gap:24px}
+.stitch-app .home-section .section-heading p{max-width:540px;margin:0}
+.stitch-app .career-filters{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+.stitch-app .career-filters button{font-size:11px;min-height:34px;padding:7px 12px;border-radius:999px}
+.stitch-app .career-preview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.stitch-app button.career-preview{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:12px;text-align:left;min-height:360px;padding:24px;background:#fbe8ff;border:1px solid transparent;color:var(--text);border-radius:16px;box-shadow:none}
+.stitch-app button.career-preview:hover:not(:disabled){background:#f7dfff;border-color:#d7b8ed;color:var(--text)}
+.stitch-app .career-preview .career-symbol{display:grid;place-items:center;width:42px;height:42px;background:#fff;border-radius:12px;color:#500088;font-size:inherit;margin-top:4px}
+.stitch-app .career-preview>strong{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;line-height:1.4}
+.stitch-app .career-preview .career-goal{font-size:12px;line-height:1.6;color:#500088}
+.stitch-app .career-preview .career-description{font-size:12px;line-height:1.8;color:#5e4b69}
+.stitch-app .career-support{display:inline-block;max-width:100%;width:fit-content;white-space:normal;background:#f3d9ff;color:#500088;border:0;border-radius:5px;padding:4px 8px;font-size:10px;line-height:1.5;letter-spacing:.02em;margin:0}
+.stitch-app .career-preview .career-skills{display:grid;gap:7px;font-size:11px;font-weight:400;color:var(--muted);margin:0 0 8px}
+.stitch-app .career-skills>span{display:flex;align-items:center;gap:6px}
+.stitch-app .career-skills .ui-icon{width:14px;height:14px}
+.stitch-app .career-preview>small{display:flex;justify-content:space-between;align-items:center;width:100%;padding:11px 12px;margin-top:auto;background:#efd5ff;color:#500088;font-size:12px;border-radius:7px}
+.stitch-app .how-section{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:48px;background:#f5e1ff;margin:0 -40px;padding:48px 40px;border-radius:0}
+.stitch-app .how-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:28px}
+.stitch-app .how-grid>div>span{display:inline-flex;color:#500088;font-size:12px;border:0;padding:0;margin:0 0 12px}
+.stitch-app .how-grid h3{font-size:14px;margin-bottom:8px}
+.stitch-app .how-grid p{font-size:12px;line-height:1.75}
+.stitch-app .home-ledger{background:white;border-radius:16px;padding:24px;align-self:center;box-shadow:0 4px 16px #2d123d08}
+.stitch-app .home-ledger>div{display:grid;grid-template-columns:24px 1fr;gap:7px 10px;padding:18px 12px;margin-top:16px;border-radius:10px;background:#fbeeff}
+.stitch-app .home-ledger>div .ui-icon{grid-row:1/4;color:#500088}
+.stitch-app .home-ledger strong{font-size:13px}
+.stitch-app .home-ledger>div>span{font-size:12px;color:#500088}
+.stitch-app .home-ledger p{font-size:12px;line-height:1.7;margin:0}
+.stitch-app .home-ledger>.fine-print{margin-top:16px}
+.stitch-app .home-closing{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:32px;background:#fbe8ff;border:1px solid #f3ddfb;border-radius:16px;margin-top:48px}
+.stitch-app .home-closing h2{font-size:25px;margin:8px 0}
+.stitch-app .home-closing p{margin:0}
+.stitch-app .career-onboarding{display:block}
+.stitch-app .setup-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;padding:24px;background:#fbeaff;border-radius:18px;margin:0 0 32px;list-style:none}
+.stitch-app .setup-progress li{display:flex;flex-direction:row;align-items:center;gap:14px;border:0;padding:0;color:var(--muted);font-size:12px;min-width:0}
+.stitch-app .setup-progress li>span:first-child{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:50%;background:#f1d9ff;color:#500088;font-size:15px;font-weight:700}
+.stitch-app .setup-progress li.current>span:first-child{background:#500088;color:#fff}
+.stitch-app .setup-progress li>div{min-width:0}
+.stitch-app .setup-progress strong{display:block;color:#2a0f3a;font-size:13px;line-height:1.5}
+.stitch-app .setup-progress small{font-size:10px;line-height:1.4}
+.stitch-app .setup-progress .current strong{color:#500088}
+.stitch-app .setup-progress.three{grid-template-columns:repeat(3,minmax(0,1fr));padding:20px}
+.stitch-app .setup-progress.three li{flex-direction:column;align-items:flex-start;font-size:11px;gap:8px}
+.stitch-app .onboarding-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:28px;align-items:start}
+.stitch-app .onboarding-form{background:#fff;border:1px solid #f4e9f7;padding:28px;border-radius:20px;max-width:none;width:100%;margin:0}
+.stitch-app .onboarding-form h2{font-size:30px;margin:10px 0}
+.stitch-app .step-description{max-width:680px;margin:0 0 24px}
+.stitch-app .setup-ledger{padding:28px;background:#fff;border:1px solid #f4e9f7;border-radius:20px;position:sticky;top:108px}
+.stitch-app .setup-ledger h2{font-size:22px;margin:14px 0 24px}
+.stitch-app .ledger-goal{display:flex;align-items:center;gap:12px;padding:16px;background:#faeaff;border-radius:12px;margin-bottom:14px}
+.stitch-app .ledger-goal>span{min-width:0}
+.stitch-app .ledger-goal small{display:block;font-size:10px;color:var(--muted);margin-bottom:5px}
+.stitch-app .ledger-goal strong{display:block;font-size:13px;line-height:1.6;color:#500088}
+.stitch-app .reserve-note{display:flex;align-items:flex-start;gap:10px;background:#faf0ff;border-radius:12px;padding:16px;margin:20px 0}
+.stitch-app .reserve-note .ui-icon{color:#500088}
+.stitch-app .reserve-note p{font-size:12px;margin:0}
+.stitch-app .career-choice-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.stitch-app .career-choice{background:#fff;border:1px solid #e9dced;border-radius:12px;padding:18px;min-height:0;display:flex;align-items:flex-start;gap:14px}
+.stitch-app .career-choice:last-child{grid-column:auto}
+.stitch-app .career-choice strong{font-size:15px;line-height:1.6}
+.stitch-app .career-choice small{display:block;font-size:12px;line-height:1.6}
+.stitch-app .career-choice .career-goal{color:#500088;margin:7px 0}
+.stitch-app .career-choice .career-support{font-size:10px;margin-top:8px}
+.stitch-app .career-choice.chosen,.stitch-app .scratch-choice.chosen{background:#fcf0ff;border-color:#7c3aed;box-shadow:inset 0 0 0 1px #7c3aed}
+.stitch-app .choice{background:#fff;border:1px solid #e3d5e9;border-radius:10px;min-height:56px}
+.stitch-app .scratch-choice{margin-bottom:16px;padding:18px;gap:14px;align-items:flex-start}
+.stitch-app .scratch-choice>input{margin-top:3px}
+.stitch-app .scratch-choice>span{display:flex;flex-direction:column;gap:6px;min-width:0}
+.stitch-app .scratch-choice strong{display:block;font-size:14px;line-height:1.5}
+.stitch-app .scratch-choice small{display:block;font-weight:400;font-size:12px;line-height:1.6;color:var(--muted)}
+.stitch-app .choice:has(input:checked){background:#fcf0ff;border-color:#7c3aed;box-shadow:inset 0 0 0 1px #7c3aed}
+.stitch-app input[type=checkbox],.stitch-app input[type=radio]{width:19px;height:19px;accent-color:#6b21a8}
+.stitch-app input:not([type=checkbox]):not([type=radio]),.stitch-app select{background:#fff;color:#2a0f3a;border:1px solid #cfc2d4;border-radius:8px;min-height:48px;font-family:Inter,sans-serif}
+.stitch-app .budget-card{background:#fff;border:0;padding:0;box-shadow:none}
+.stitch-app .budget-field{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid #f2e5f6;gap:24px;min-width:0}
+.stitch-app .budget-field-copy{flex:1 1 0;min-width:0}
+.stitch-app .budget-field-copy small{font-size:12px;color:#5e4b69}
+.stitch-app .career-onboarding .budget-card .amount-input{display:flex;align-items:center;gap:8px;background:#f8e6ff;border:1px solid #e1c9ee;border-radius:10px;flex:0 0 180px;width:180px;max-width:180px;min-width:0;padding:0 14px;overflow:hidden}
+.stitch-app .career-onboarding .budget-card .amount-input input{flex:1 1 auto;width:0;min-width:0;margin:0!important;padding:14px 0!important;border:0;border-radius:0;box-shadow:none;font-size:20px;font-weight:700;color:#500088;background:transparent!important;text-align:right}
+.stitch-app .career-onboarding .budget-card .amount-input>span{position:static;transform:none;flex:0 0 auto;white-space:nowrap;color:#500088;font-size:11px}
+.stitch-app .career-onboarding .budget-card .amount-input:focus-within{outline:2px solid #7c3aed;outline-offset:3px}
+.stitch-app .career-onboarding .budget-card .amount-input input:focus-visible{outline:none}
+.stitch-app .currency-note{background:#faf0ff;border:0;padding:12px 14px;border-radius:8px;font-size:12px}
+.stitch-app .usable-budget{background:#f9edff;padding:18px;border-radius:12px;border:0;align-items:flex-start;gap:16px;flex-direction:column}
+.stitch-app .usable-budget strong{font-size:24px;color:#500088}
+.stitch-app .usable-budget small{font-size:12px}
+.stitch-app .form-footer{border-top:1px solid var(--border);padding-top:22px;margin-top:24px}
+.stitch-app .recommendation-layout{grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr);gap:24px}
+.stitch-app .agent-picks{background:linear-gradient(135deg,#6b21a8,#500088 70%,#402550);padding:26px;border-radius:18px;min-width:0;margin:0;color:#fff}
+.stitch-app .next-learning-heading>.eyebrow{color:#f2d9ff;font-size:11px;background:#ffffff16;border-radius:999px;padding:5px 10px;width:fit-content}
+.stitch-app .next-learning-heading h2{font-size:28px;color:#fff;margin:16px 0 12px}
+.stitch-app .next-learning-heading p{color:#f0def9;font-size:13px;margin-bottom:22px}
+.stitch-app .agent-picks .recommendation-title{font-size:14px;color:#fff;letter-spacing:0;margin:0 0 14px}
+.stitch-app .agent-picks .agent-decision{color:#f4e4ff;font-size:12px;background:transparent;border-left:2px solid #c8a2e5;padding:0 0 0 12px;margin:0 0 20px}
+.stitch-app .roadmap-resource-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.stitch-app .learning-card{display:grid;grid-template-columns:64px minmax(0,1fr);gap:0;background:white;border:1px solid #eedff3;border-radius:14px;min-width:0;color:var(--text)}
+.stitch-app .resource-art{display:flex;flex-direction:column;justify-content:flex-start;gap:12px;align-items:center;min-height:0;padding:22px 10px;background:transparent;color:#500088}
+.stitch-app .resource-art::before{display:none}
+.stitch-app .resource-art>svg{width:42px;height:42px;background:#f7e8ff;border-radius:10px;padding:7px}
+.stitch-app .resource-art>span{font-size:9px;line-height:1.5;padding:0;position:static;background:transparent}
+.stitch-app .format-lab .resource-art>svg{background:#d1fae5;color:#065f46}
+.stitch-app .format-practice .resource-art>svg{background:#e0f2fe;color:#0369a1}
+.stitch-app .resource-content{padding:20px 20px 20px 0}
+.stitch-app .resource-meta>span:first-child{font-size:11px}
+.stitch-app .learning-card h3{font-size:17px;line-height:1.5;margin:10px 0 12px;min-height:0;color:#2a0f3a}
+.stitch-app .selection-reason{font-size:12px;margin:14px 0}
+.stitch-app .selection-reason strong{font-size:11px;font-weight:600}
+.stitch-app .chip{background:#f8effc;border:0;color:#5e4b69;font-size:10px;padding:4px 7px}
+.stitch-app .resource-price{border-top:1px solid #f0e4f6;margin-top:12px;padding-top:12px}
+.stitch-app .resource-price strong{font-size:21px;color:#500088}
+.stitch-app .resource-preview{margin-top:12px;border-color:#f0e4f6}
+.stitch-app .resource-preview summary{font-size:12px}
+.stitch-app .resource-preview p{font-size:12px}
+.stitch-app .recommendation-budget,.stitch-app .budget-summary{background:white;border:1px solid #f0e4f6;border-radius:18px;padding:24px}
+.stitch-app .recommendation-budget{position:sticky;top:104px}
+.stitch-app .recommendation-budget h2{display:flex;align-items:center;gap:10px;font-size:20px;margin:0 0 14px}
+.stitch-app .rule-list>div{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:1px solid #f0e5f4;padding:14px 0}
+.stitch-app .rule-list dt{font-size:12px;line-height:1.7;color:#5e4b69}
+.stitch-app .rule-list dd{font-size:13px;font-weight:600;color:#500088;margin:0;text-align:right;font-variant-numeric:tabular-nums;line-height:1.7}
+.stitch-app .recommendation-budget .rule-list>div:nth-child(3){background:#fffbeb;padding:14px 10px;border-radius:8px;margin:4px -8px;color:#92400e;border:0}
+.stitch-app .recommendation-budget .rule-list>div:nth-child(3) dd{color:#92400e}
+.stitch-app .recommendation-actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.stitch-app .recommendation-actions button{width:100%;white-space:normal}
+.stitch-app .roadmap-milestones{padding-top:34px}
+.stitch-app .roadmap-milestones h2{display:flex;gap:10px;align-items:center;font-size:20px}
+.stitch-app .career-timeline{list-style:none;margin:24px 0;padding:0}
+.stitch-app .career-timeline>li{display:flex;position:relative;gap:16px;padding:0 0 22px;min-width:0}
+.stitch-app .career-timeline>li:not(:last-child)::after{content:'';position:absolute;left:19px;top:40px;bottom:0;border-left:2px dashed #d7b8ed;z-index:0}
+.stitch-app .timeline-number{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:50%;background:#f4e5fc;border:1px solid #e0c8ef;color:#500088;z-index:1}
+.stitch-app .career-timeline>li:first-child>.timeline-number{background:#500088;border-color:#500088;color:#fff}
+.stitch-app .career-timeline>li>div{background:#fff;border:1px solid #f0e4f6;padding:22px;border-radius:14px;flex:1;min-width:0}
+.stitch-app .career-timeline>li:first-child>div{background:#fbeaff}
+.stitch-app .career-timeline h3{font-size:19px;margin:8px 0}
+.stitch-app .career-timeline p{font-size:13px;margin:0}
+.stitch-app .free-resource{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:start;gap:20px;background:#fff;border:1px solid #d8ece3;border-radius:14px;padding:28px;margin:24px 0}
+.stitch-app .free-resource .status{background:#d1fae5;color:#065f46}
+.stitch-app .free-resource-icon{display:grid;place-items:center;width:44px;height:44px;background:#ecfdf5;color:#065f46;border-radius:12px}
+.stitch-app .free-resource-copy{min-width:0}
+.stitch-app .free-resource-copy h3{font-size:20px;line-height:1.45;margin:12px 0 10px}
+.stitch-app .free-resource-copy>p{font-size:13px;margin:0 0 14px}
+.stitch-app .free-resource-note{display:block;font-size:12px;line-height:1.6;color:var(--muted)}
+.stitch-app .free-resource-copy details{margin-top:8px}
+.stitch-app .free-resource-copy summary{font-size:12px;min-height:36px;padding:8px 0}
+.stitch-app a.free-resource-action{display:inline-flex;align-items:center;justify-content:center;gap:10px;align-self:center;min-height:44px;padding:12px 16px;border:1px solid #d7b8ed;border-radius:8px;background:#f7e8ff;color:#500088;font-size:13px;font-weight:600;line-height:1.5;text-decoration:none;white-space:normal}
+.stitch-app a.free-resource-action:hover{background:#efdcfa}
+@media(max-width:767px){.stitch-app .free-resource{grid-template-columns:36px minmax(0,1fr);gap:14px;padding:22px 18px}.stitch-app .free-resource-icon{width:36px;height:36px}.stitch-app .free-resource-copy h3{font-size:18px}.stitch-app a.free-resource-action{grid-column:1/-1;width:100%;min-height:48px}}
+.stitch-app .alternatives,.stitch-app .path-settings,.stitch-app .certification-references{padding:10px 20px;border:1px solid #eddef4;border-radius:12px;background:#fcf1ff;margin:22px 0}
+.stitch-app .path-settings button{display:flex;font-size:12px}
+.stitch-app .path-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:24px}
+.stitch-app .path-aside{position:sticky;top:104px}
+.stitch-app .budget-available strong{font-size:32px;color:#500088}
+.stitch-app .budget-available{padding:20px 0}
+.stitch-app .exam-reserve{background:#fffbeb;padding:12px;border:0;border-radius:8px;font-size:12px;color:#92400e}
+.stitch-app .settings-section{padding:26px;background:#fff;border:1px solid #f0e4f6;border-radius:16px;margin-bottom:24px}
+.stitch-app .settings-section h2{font-size:24px}
+.stitch-app .provider-choice{display:flex;gap:12px;padding:15px;border:1px solid #eee0f5;border-radius:10px;margin:12px 0;background:#fcf5ff;align-items:flex-start}
+.stitch-app .provider-choice strong{display:block;font-size:14px;line-height:1.5}
+.stitch-app .provider-choice small{display:block;font-size:11px;color:var(--muted);margin-top:5px}
+.stitch-app .review-resources{padding-left:20px}
+.stitch-app .review-resources li{font-size:13px;line-height:1.65;padding-bottom:14px}
+.stitch-app .wallet-help{background:#fcf0ff;border-radius:12px;padding:20px;margin:20px 0}
+.stitch-app .wallet-help ol{padding-left:18px}
+.stitch-app .wallet-help li{margin-bottom:12px;font-size:13px}
+.stitch-app .service-summary{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;background:#fbeeff;border:0;border-radius:12px;padding:20px;margin:20px 0}
+.stitch-app .service-summary h3{font-size:26px;margin:10px 0}
+.stitch-app .service-summary p{font-size:12px;max-width:420px;margin:0}
+.stitch-app .owner-step{display:flex;flex-direction:column;gap:14px;align-items:flex-start;border-top:1px solid #eee0f5;padding-top:20px}
+.stitch-app .completed-signatures{list-style:none;padding:0;font-size:12px}
+.stitch-app .completed-signatures li{background:#ecfdf5;color:#065f46;border-radius:8px;padding:10px 14px;margin:8px 0;font-size:12px}
+.stitch-app .purchase-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:0 0 28px}
+.stitch-app .metric-card{position:relative;overflow:hidden;background:#fff;border:1px solid #f0e4f6;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.stitch-app .metric-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:#e6bdfd}
+.stitch-app .metric-card>.eyebrow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;font-size:9px;color:var(--text);letter-spacing:.04em}
+.stitch-app .metric-card strong{font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;line-height:1.4;color:#500088;letter-spacing:-.8px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stitch-app .metric-card strong small{font-family:Inter,sans-serif;font-size:10px;font-weight:500;letter-spacing:0}
+.stitch-app .metric-card>span:last-child{font-size:11px;color:var(--muted);line-height:1.6}
+.stitch-app .receipt-card,.stitch-app .start-agent{background:#fff;border:1px solid #f0e4f6;border-radius:16px;padding:26px;margin-bottom:20px}
+.stitch-app .receipt-card>.eyebrow,.stitch-app .start-agent>.eyebrow{font-size:10px;background:#faf0ff;width:fit-content;padding:5px 9px;border-radius:999px;letter-spacing:.025em;margin-bottom:18px}
+.stitch-app .receipt-card h2{font-size:21px;margin:0 0 10px}
+.stitch-app .receipt-resource-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:18px}
+.stitch-app .receipt-resource-head>div{flex:1;min-width:0}
+.stitch-app .receipt-resource-head h2{font-size:18px;margin:7px 0 0}
+.stitch-app .receipt-resource-head .provider-name{font-size:11px;color:#5e4b69}
+.stitch-app .purchase-resource-icon{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border-radius:12px;background:#f7e8ff;color:#500088}
+.stitch-app .purchase-resource-icon.format-lab{background:#d1fae5;color:#065f46}
+.stitch-app .receipt-amount{display:block;font-size:23px;line-height:1.4;color:#500088;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.stitch-app .receipt-amount small{display:block;font-size:9px;font-weight:400;white-space:normal}
+@media(max-width:767px){.stitch-app .receipt-resource-head{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px}.stitch-app .purchase-resource-icon{width:36px;height:36px}.stitch-app .receipt-resource-head h2{font-size:17px}.stitch-app .receipt-amount{grid-column:2;text-align:left;font-size:22px}.stitch-app .receipt-amount small{display:inline;margin-left:6px}}
+.stitch-app .receipt-card>p{font-size:13px;line-height:1.75;margin:12px 0 18px}
+.stitch-app .receipt-card>p strong{font-size:18px;color:#500088;font-variant-numeric:tabular-nums}
+.stitch-app .receipt-card>.status{margin-bottom:4px}
+.stitch-app .purchase-details{border-top:1px solid #f0e4f6;padding-top:7px;margin-top:20px}
+.stitch-app .receipt-card .access-code{margin-top:18px;background:#f9f0ff;border:1px solid #e2cbee;border-radius:12px;padding:20px}
+.stitch-app .receipt-card .access-code code{overflow-wrap:anywhere;white-space:normal;background:white;padding:12px;border-radius:8px;display:block;color:#500088}
+.stitch-app .activity-page{max-width:none}
+.stitch-app .start-agent h2{font-size:26px;margin-top:16px}
+.stitch-app .start-agent li{font-size:13px;padding-bottom:10px}
+.stitch-app .service-details{padding:12px 20px;border:1px solid #eddef4;background:#fcf1ff;border-radius:12px}
+.stitch-app .catalog-filters{background:#fff;border:1px solid #f0e4f6;padding:22px;border-radius:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.stitch-app .catalog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.stitch-app .catalog-grid .learning-card{grid-template-columns:64px minmax(0,1fr)}
+.stitch-app .catalog-grid .resource-art{padding:22px 10px;min-height:0}
+.stitch-app .catalog-grid .resource-art>span{position:static;padding:0;background:none;border:0}
+.stitch-app .catalog-grid .resource-content>h3{min-height:0}
+.stitch-app .catalog-grid .resource-content>.chips{padding-bottom:0}
+.stitch-app .catalog-intro p{font-size:14px}
+.stitch-app .results-count{font-size:12px;margin-block:20px}
+.stitch-app .no-purchase-note{background:#ffffff15;color:#f4e4ff;font-size:13px;border-radius:12px;padding:16px}
+.brand-loading,.roadmap-loading{background:#fff7fc;min-height:65vh;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;text-align:center}
+.brand-loading{min-height:100vh}
+.brand-loading>strong{font-size:30px;letter-spacing:-1px}
+.brand-loading p,.roadmap-loading p{font-size:13px;color:var(--muted)}
+.loading-line{display:block;width:120px;height:3px;overflow:hidden;border-radius:5px;background:#ead9f4;position:relative}
+.loading-line::after{content:'';position:absolute;inset:0;background:#6b21a8;animation:stitch-loading 1.4s ease-in-out infinite;transform-origin:left}
+@keyframes stitch-loading{0%,100%{transform:scaleX(.12)}50%{transform:scaleX(.9)}}
+.brand-loading .loading-mark,.stitch-app .loading-mark{background:#500088;border-radius:16px;width:60px;height:60px;color:#fff;display:grid;place-items:center}
+.loading-mark>.ui-icon{width:34px;height:34px}
+.stitch-app .loading-line::after,.brand-loading .loading-line::after{background:#6b21a8}
+@media(min-width:1600px){.stitch-app.is-workspace main{padding-inline:48px}.stitch-app .career-preview-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1200px){.stitch-app .site-header{gap:14px}.stitch-app .top-nav button{padding:9px;font-size:11px}.stitch-app .header-status{gap:8px}.stitch-app .hero-copy h1{font-size:40px}.stitch-app .home-hero{gap:32px}.stitch-app .onboarding-layout{grid-template-columns:minmax(0,1.3fr) minmax(260px,1fr);gap:20px}.stitch-app .onboarding-form,.stitch-app .setup-ledger{padding:22px}.stitch-app .recommendation-layout{grid-template-columns:minmax(0,1fr) 260px}.stitch-app .path-layout{grid-template-columns:minmax(0,1fr) 250px;gap:20px}.stitch-app .purchase-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.stitch-app .how-section{gap:28px}.stitch-app .how-grid{grid-template-columns:1fr;gap:10px}.stitch-app .how-grid>div{display:grid;grid-template-columns:28px 1fr;gap:0 10px}.stitch-app .how-grid>div>span{grid-row:1/3}.stitch-app .how-grid h3{margin-top:0}.stitch-app .career-filters{max-width:290px}}
+@media(max-width:1023px){.stitch-app .site-header{padding:14px 24px}.stitch-app .site-header .brand{font-size:23px}.stitch-app .is-home .header-status{display:none}.stitch-app.is-workspace .site-header{left:0;right:0;position:sticky;padding:14px 24px;min-height:76px;flex-wrap:wrap}.stitch-app.is-workspace .brand{position:static;width:auto;height:auto;padding:0;background:transparent}.stitch-app .site-header .menu-toggle{display:inline-flex;margin-left:auto;padding:9px 14px;background:#f7e8ff;color:#500088;border:0;font-size:12px}.stitch-app .workspace-track{display:none!important}.stitch-app.is-workspace .top-nav,.stitch-app.is-home .top-nav{display:none;position:absolute;left:0;right:0;top:100%;bottom:auto;width:100%;height:auto;max-height:70vh;overflow-y:auto;padding:16px 24px;background:#feefff;flex-direction:column;align-items:stretch;border:1px solid #eddef4;border-radius:0 0 16px 16px;margin:0;box-shadow:0 12px 20px #2d123d0a}.stitch-app .top-nav.is-open,.stitch-app.is-workspace .top-nav.is-open{display:flex}.stitch-app .top-nav button{justify-content:flex-start;padding:14px;font-size:14px}.stitch-app .top-nav button .ui-icon{display:block}.stitch-app .sidebar-note,.stitch-app .sidebar-track{display:none}.stitch-app.is-workspace main{margin:0;width:100%;padding:28px 24px}.stitch-app.is-home main{padding-inline:24px}.stitch-app .header-status{margin-left:0}.stitch-app .home-hero{padding:44px 0;gap:28px}.stitch-app .hero-copy h1{font-size:38px}.stitch-app .hero-copy>.eyebrow{font-size:9px}.stitch-app .hero-roadmap{padding:22px}.stitch-app .home-principles{margin-inline:-24px;padding:24px}.stitch-app .how-section{margin-inline:-24px;padding:36px 24px}.stitch-app .onboarding-layout{grid-template-columns:minmax(0,1.5fr) minmax(260px,1fr)}.stitch-app .setup-ledger,.stitch-app .recommendation-budget,.stitch-app .path-aside{top:100px}.stitch-app .home-section .section-heading{flex-direction:column;align-items:flex-start}.stitch-app .career-filters{max-width:none}}
+@media(max-width:767px){html{scroll-padding-top:150px}.stitch-app .site-header,.stitch-app.is-workspace .site-header{padding:14px 16px;gap:12px;min-height:72px;flex-wrap:wrap}.stitch-app .site-header .brand{font-size:23px}.stitch-app .brand .ui-icon{width:26px;height:26px}.stitch-app .site-header .menu-toggle{order:1}.stitch-app .header-status{order:2;width:100%;justify-content:space-between;margin:0;gap:10px}.stitch-app .header-status:not(:has(.setup-resume)){display:none}.stitch-app .header-status .setup-resume{width:auto;min-height:42px;padding:10px 14px;font-size:12px;white-space:normal}.stitch-app .header-status>.testnet-label{font-size:10px}.stitch-app .top-nav.is-open{top:100%}.stitch-app.is-workspace main,.stitch-app.is-home main{padding:24px 16px}.stitch-app .journey-intro{padding:22px 20px;margin-bottom:22px;border-radius:16px}.stitch-app .journey-intro h1{font-size:26px;line-height:1.3;letter-spacing:-.8px}.stitch-app .journey-intro .eyebrow{font-size:9px}.stitch-app .journey-intro p{font-size:12px}.stitch-app .home-hero{grid-template-columns:minmax(0,1fr);padding:20px 0 32px;gap:32px}.stitch-app .hero-copy h1{font-size:34px;line-height:1.2;letter-spacing:-1px}.stitch-app .hero-copy>p{font-size:14px}.stitch-app .hero-copy>.eyebrow{font-size:9px}.stitch-app .hero-actions{gap:10px}.stitch-app .hero-trust{gap:12px}.stitch-app .hero-trust>span{font-size:10px}.stitch-app .hero-roadmap{width:100%;max-width:none;padding:22px;justify-self:stretch}.stitch-app .hero-roadmap h2{font-size:21px}.stitch-app .hero-roadmap li{padding:14px 12px}.stitch-app .preview-top{font-size:10px}.stitch-app .preview-top .eyebrow{max-width:140px}.stitch-app .hero-atmosphere{inset:-24px -16px 0}.stitch-app .home-principles{grid-template-columns:1fr;margin-inline:-16px;padding:24px 20px;gap:24px}.stitch-app .home-section{padding:32px 0}.stitch-app .home-section h2,.stitch-app .how-section h2{font-size:26px;line-height:1.3}.stitch-app .career-preview-grid{grid-template-columns:1fr;gap:16px}.stitch-app button.career-preview{display:flex;min-height:0;padding:22px;gap:12px}.stitch-app .career-preview .career-symbol{grid-row:auto}.stitch-app .career-preview>small{grid-column:auto}.stitch-app .career-preview .career-support,.stitch-app .career-preview .career-goal{grid-column:auto;display:block}.stitch-app .career-preview .career-skills{display:grid}.stitch-app .how-section{grid-template-columns:minmax(0,1fr);margin-inline:-16px;padding:32px 20px;gap:24px}.stitch-app .how-grid{grid-template-columns:1fr;gap:14px}.stitch-app .home-closing{flex-direction:column;align-items:flex-start;padding:24px;margin-top:32px}.stitch-app .home-closing h2{font-size:23px}.stitch-app .home-closing button{width:100%}.stitch-app .setup-progress{padding:16px 12px;gap:8px;border-radius:14px;margin-bottom:22px}.stitch-app .setup-progress li{flex-direction:column;align-items:flex-start;gap:8px}.stitch-app .setup-progress li>span:first-child{width:30px;height:30px;flex-basis:30px;font-size:12px}.stitch-app .setup-progress strong{font-size:11px}.stitch-app .setup-progress small{font-size:8px}.stitch-app .onboarding-layout{grid-template-columns:minmax(0,1fr);gap:22px}.stitch-app .onboarding-form{padding:22px 18px}.stitch-app .onboarding-form h2{font-size:27px}.stitch-app .setup-ledger{position:static;padding:22px}.stitch-app .career-choice{padding:15px;gap:12px}.stitch-app .career-choice strong{font-size:14px}.stitch-app .career-choice .career-support{font-size:10px;display:block;white-space:normal}.stitch-app .choice-grid{grid-template-columns:1fr}.stitch-app .budget-field{flex-direction:column;align-items:stretch}.stitch-app .budget-field-copy{width:100%}.stitch-app .career-onboarding .budget-card .amount-input{max-width:none;width:100%;flex-basis:auto}.stitch-app .form-footer{gap:12px}.stitch-app .form-footer>.fine-print{font-size:10px;max-width:120px}.stitch-app .form-footer>button{min-width:0;font-size:12px;padding:12px 16px}.stitch-app .recommendation-layout,.stitch-app .path-layout{grid-template-columns:minmax(0,1fr);gap:22px}.stitch-app .recommendation-budget,.stitch-app .path-aside{position:static}.stitch-app .agent-picks{padding:22px 18px;border-radius:16px}.stitch-app .next-learning-heading h2{font-size:24px}.stitch-app .agent-picks .recommendation-title{font-size:13px}.stitch-app .learning-card,.stitch-app .catalog-grid .learning-card{grid-template-columns:54px minmax(0,1fr)}.stitch-app .resource-art{padding:18px 8px}.stitch-app .resource-art>svg{width:36px;height:36px;padding:6px}.stitch-app .resource-art>span{font-size:8px}.stitch-app .resource-content{padding:18px 14px 18px 0}.stitch-app .learning-card h3{font-size:16px}.stitch-app .resource-price{flex-wrap:wrap}.stitch-app .resource-price strong{font-size:20px}.stitch-app .recommendation-budget{padding:22px}.stitch-app .recommendation-budget h2{font-size:21px}.stitch-app .career-timeline>li{gap:12px}.stitch-app .timeline-number{flex-basis:32px;width:32px;height:32px;font-size:11px}.stitch-app .career-timeline>li:not(:last-child)::after{left:15px;top:32px}.stitch-app .career-timeline>li>div{padding:18px}.stitch-app .career-timeline h3{font-size:17px}.stitch-app .career-timeline p{font-size:12px}.stitch-app .settings-section{padding:22px 18px}.stitch-app .settings-section h2{font-size:23px}.stitch-app .setup-progress.three{padding:16px;gap:12px}.stitch-app .setup-progress.three li{font-size:10px}.stitch-app .bottom-actions{display:flex;flex-direction:column-reverse;gap:12px}.stitch-app .bottom-actions button{width:100%}.stitch-app .purchase-overview{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:22px}.stitch-app .metric-card{padding:16px;gap:14px;border-radius:12px}.stitch-app .metric-card>.eyebrow{font-size:8px;gap:6px}.stitch-app .metric-card>.eyebrow .ui-icon{width:16px;height:16px}.stitch-app .metric-card strong{font-size:24px}.stitch-app .metric-card strong small{display:block;font-size:10px}.stitch-app .metric-card>span:last-child{font-size:10px}.stitch-app .receipt-card,.stitch-app .start-agent{padding:22px 18px;border-radius:14px}.stitch-app .receipt-card h2{font-size:20px}.stitch-app .receipt-card>button{width:100%;white-space:normal}.stitch-app .receipt-card>.eyebrow{font-size:9px}.stitch-app .order-states{grid-template-columns:1fr;gap:12px}.stitch-app .catalog-filters{grid-template-columns:1fr;padding:20px;gap:16px}.stitch-app .catalog-grid{grid-template-columns:1fr}.stitch-app footer{flex-direction:column;align-items:flex-start;font-size:10px;gap:16px;margin-top:36px}.stitch-app button{min-height:48px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
